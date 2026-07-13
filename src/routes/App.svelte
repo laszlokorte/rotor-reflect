@@ -598,7 +598,10 @@ const rotateHalf =
         gap: 0.5ex;
         padding: 0.5ex;
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(20em, 1fr));
+        grid-template-columns: repeat(
+            auto-fit,
+            minmax(20em, 1fr) minmax(20em, 1fr)
+        );
     }
     .grid > div {
         background: #fff;
@@ -616,10 +619,6 @@ const rotateHalf =
         background: #222;
         color: #fff;
         border-radius: 2px;
-    }
-
-    .label {
-        transform: translate(0, -100);
     }
 
     .canvas {
