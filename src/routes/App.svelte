@@ -1,4 +1,5 @@
 <script>
+    import favicon from "/static/favicon.svg";
     let reflector = $state({
         x: 3,
         y: 2,
@@ -27,6 +28,10 @@
         return u.x * v.y - u.y * v.x;
     }
 
+    function dotdet(u, v) {
+        return { x: dot(u, v), y: -det(u, v) };
+    }
+
     function len2(v) {
         return dot(v, v);
     }
@@ -44,6 +49,10 @@
 
     function norm(v) {
         return scale(1 / len(v), v);
+    }
+
+    function inv(v) {
+        return scale(1 / len2(v), v);
     }
 
     function add(u, v) {
@@ -316,107 +325,167 @@
     />
 {/snippet}
 
-<h1>Rotation via Reflection</h1>
-<p>
-    Any rotation of subject vector <code>s</code> can be achieved by two
-    successive reflections. A reflection at vector <code>u</code> followed by a
-    reflection at vector <code>v</code> results in a rotation in the plane
-    spanned by vectors <code>u</code> and <code>v</code>. The angle of the
-    rotation is twice as large as the angle between vector <code>u</code> and
-    <code>v</code>. So in general to construct a rotation of angle
-    <code>beta</code>
-    you just need to construct two vectors that enclose an angle
-    <code>beta/2</code> and them use them as reflectors for the subject vector.
-</p>
+<svelte:head>
+    <title>Rotation via Double Reflection</title>
+</svelte:head>
 
-<p>
-    The pair of vector <code>u</code> and <code>v</code> can be called a rotor.
-    Only the relative directions between <code>u</code> and <code>v</code>
-    affect the rotation result. Try drag the arc segment called
-    <code>rotor</code> below to change the direction of both reflectors at once.
-</p>
+<header>
+    <h1>
+        <img src={favicon} alt="Icon" width="100" height="100" />
+        Rotation via Double Reflection
+    </h1>
+    <p>
+        This is a demonstration how any rotation of a vector <code
+            class="name-s">s</code
+        > can be achieved by two successive reflections.
+    </p>
+    <p>
+        A reflection of vector <code class="name-s">s</code> at vector
+        <code class="name-u">u</code> is achieved by first projecting
+        <code class="name-s">s</code>
+        onto <code class="name-u">u</code> and then adding the difference betwen
+        <code class="name-s">s</code> and the projection.
+    </p>
+    <p>
+        A reflection of vector <code class="name-s">s</code> at vector
+        <code class="name-u">u</code>
+        followed by a reflection at vector <code class="name-v">v</code> results
+        in a rotation of <code class="name-s">s</code> in the plane spanned by
+        vectors
+        <code class="name-u">u</code>
+        and
+        <code class="name-s">v</code>.
+    </p>
+    <p>
+        The angle of the rotation is twice as large as the angle between vector <code
+            class="name-u">u</code
+        >
+        and vector
+        <code class="name-v">v</code>.
+    </p>
+    <p>
+        In general to construct a rotation of angle
+        <code class="name-alpha">&alpha;</code>
+        you just need to construct two vectors that enclose an angle
+        <code><code class="name-alpha">&alpha;</code> / 2</code> and then use them
+        as reflectors for the subject vector.
+    </p>
 
-<div class="grid">
-    <svg
-        class="canvas"
-        viewBox="-500 -500 1000 1000"
-        width="100"
-        height="100"
-        perserveAspectRatio="xMidYMid meet"
-    >
-        {@render axis()}
-        {@render vec(subject, "royalblue")}
+    <p>
+        The pair of vector <code class="name-u">u</code> and
+        <code class="name-s">v</code>
+        is called a rotor.
+    </p>
+    <p>
+        Notice that only the relative orientation between
+        <code class="name-u">u</code>
+        and <code class="name-s">v</code>
+        affect the rotation result. Try drag the arc segment called
+        <code class="name-rotor">rotor</code> below to change the direction of both
+        reflectors at once.
+    </p>
+</header>
 
-        {@render vec(rotor.from, "teal")}
-        {@render vec(rotor.to, "tomato")}
+<figure class="grid">
+    <div>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            perserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+            {@render vec(subject, "royalblue")}
 
-        {@render label(subject, "Subject", "royalblue")}
-        {@render label(rotor.from, "First Reflector", "teal")}
-        {@render label(rotor.to, "Second Reflector", "tomato")}
+            {@render vec(rotor.from, "teal")}
+            {@render vec(rotor.to, "tomato")}
 
-        {@render arc(rotor.from, rotor.to, "gray")}
-        {@render arclabel(rotor.from, rotor.to, "rotor", "gray")}
+            {@render label(subject, "Subject", "royalblue")}
+            {@render label(rotor.from, "First Reflector", "teal")}
+            {@render label(rotor.to, "Second Reflector", "tomato")}
 
-        {@render arcctrl(rotor.from, rotor.to, "none")}
-        {@render ctrl(subject, "royalblue")}
-        {@render ctrl(rotor.from, "teal")}
-        {@render ctrl(rotor.to, "tomato")}
-    </svg>
+            {@render arc(rotor.from, rotor.to, "gray")}
+            {@render arclabel(rotor.from, rotor.to, "rotor", "gray")}
 
-    <svg
-        class="canvas"
-        viewBox="-500 -500 1000 1000"
-        width="100"
-        height="100"
-        perserveAspectRatio="xMidYMid meet"
-    >
-        {@render axis()}
-        {@render line(subject, projected, "black", "dashed faded")}
-        {@render line(projected, reflected, "black", "dashed faded")}
+            {@render arcctrl(rotor.from, rotor.to, "none")}
+            {@render ctrl(subject, "royalblue")}
+            {@render ctrl(rotor.from, "teal")}
+            {@render ctrl(rotor.to, "tomato")}
+        </svg>
+    </div>
+    <div>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            perserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+            {@render line(subject, projected, "black", "dashed faded")}
+            {@render line(projected, reflected, "black", "dashed faded")}
 
-        {@render vec(subject, "royalblue")}
-        {@render vec(reflector, "teal")}
-        {@render vec(reflected, "orchid")}
-        {@render vec(projected, "RosyBrown", "thick")}
+            {@render vec(subject, "royalblue")}
+            {@render vec(reflector, "teal")}
+            {@render vec(reflected, "orchid")}
+            {@render vec(projected, "RosyBrown", "thick")}
 
-        {@render label(subject, "Subject", "royalblue")}
-        {@render label(reflector, "First Reflector", "teal")}
-        {@render label(projected, "Projected", "RosyBrown")}
-        {@render label(reflected, "Reflected", "orchid")}
+            {@render label(subject, "Subject", "royalblue")}
+            {@render label(reflector, "First Reflector", "teal")}
+            {@render label(projected, "Projected", "RosyBrown")}
+            {@render label(reflected, "Reflected", "orchid")}
 
-        {@render ctrl(subject, "royalblue")}
-        {@render ctrl(reflector, "teal")}
-    </svg>
+            {@render ctrl(subject, "royalblue")}
+            {@render ctrl(reflector, "teal")}
+        </svg>
+    </div>
+    <div>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            perserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+            {@render line(reflected, projected2, "black", "dashed faded")}
+            {@render line(projected2, rotated, "black", "dashed faded")}
+            {@render vec(subject, "royalblue")}
 
-    <svg
-        class="canvas"
-        viewBox="-500 -500 1000 1000"
-        width="100"
-        height="100"
-        perserveAspectRatio="xMidYMid meet"
-    >
-        {@render axis()}
-        {@render line(reflected, projected2, "black", "dashed faded")}
-        {@render line(projected2, rotated, "black", "dashed faded")}
-        {@render vec(subject, "royalblue")}
+            {@render vec(rotor.to, "tomato")}
+            {@render vec(reflected, "orchid")}
+            {@render vec(rotated, "yellowgreen")}
+            {@render vec(projected2, "RebeccaPurple", "thick")}
 
-        {@render vec(rotor.to, "tomato")}
-        {@render vec(reflected, "orchid")}
-        {@render vec(rotated, "yellowgreen")}
-        {@render vec(projected2, "RebeccaPurple", "thick")}
+            {@render arc(subject, rotated, "gray")}
 
-        {@render arc(subject, rotated, "gray")}
+            {@render label(subject, "Subject", "royalblue")}
+            {@render label(rotor.to, "Second Reflector", "tomato")}
+            {@render label(projected2, "Projected", "orchid")}
+            {@render label(rotated, "Rotated", "yellowgreen")}
 
-        {@render label(subject, "Subject", "royalblue")}
-        {@render label(rotor.to, "Second Reflector", "tomato")}
-        {@render label(projected2, "Projected", "orchid")}
-        {@render label(rotated, "Rotated", "yellowgreen")}
-
-        {@render arcctrl(subject, rotated, "none")}
-        {@render ctrl(subject, "royalblue")}
-        {@render ctrl(rotor.to, "tomato")}
-    </svg>
-    <pre>{`
+            {@render arcctrl(subject, rotated, "none")}
+            {@render ctrl(subject, "royalblue")}
+            {@render ctrl(rotor.to, "tomato")}
+        </svg>
+    </div>
+</figure>
+<section>
+    <p>
+        Take a look at the implementation below. No trigonometric use of <code
+            >sin</code
+        >
+        or <code>cos</code> is needed to perform the rotations.
+    </p>
+    <p>
+        The construction of any transformation by only composing reflections
+        sits at the core of <a href="https://bivector.net/" target="_blank"
+            >Geometric Algebra</a
+        >.
+    </p>
+</section>
+<pre>{`
 // dot ~ similarity in direction
 const dot = (a, b) => a.x * b.x + a.y * b.y
 // det ~ deviation in direction
@@ -446,7 +515,10 @@ const rotateHalf =
   (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
         `.trim()}
     </pre>
-</div>
+
+<footer>
+    <a href="//tools.laszlokorte.de" target="_blank">More educational tools</a>
+</footer>
 
 <svg>
     <defs>
@@ -470,8 +542,6 @@ const rotateHalf =
     pre {
         margin: 0;
         padding: 1em;
-        width: 100%;
-        height: 100%;
         box-sizing: border-box;
         overflow: auto;
         line-height: 1.5;
@@ -492,6 +562,10 @@ const rotateHalf =
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(20em, 1fr));
     }
+    .grid > div {
+        background: #fff;
+        overflow: visible;
+    }
 
     code {
         font-family: monospace, monospace;
@@ -507,6 +581,7 @@ const rotateHalf =
     }
 
     .canvas {
+        position: relative;
         user-select: none;
         overflow: visible;
         box-sizing: border-box;
@@ -514,8 +589,8 @@ const rotateHalf =
         width: 100%;
         height: 100%;
         display: block;
-        background: #fff;
         overflow: visible;
+        z-index: 100;
     }
 
     .vector {
@@ -524,8 +599,8 @@ const rotateHalf =
         stroke-linejoin: round;
     }
     .dashed {
-        stroke-dasharray: 3 10;
-        stroke-width: 3;
+        stroke-dasharray: 4 5;
+        stroke-width: 2;
     }
     .thick {
         stroke-width: 5;
@@ -544,5 +619,50 @@ const rotateHalf =
 
     .faded {
         opacity: 0.3;
+    }
+
+    .name-u {
+        background-color: tomato;
+    }
+    .name-v {
+        background-color: teal;
+    }
+
+    .name-s {
+        background-color: royalblue;
+    }
+
+    h1 img {
+        width: 1em;
+        height: 1em;
+    }
+
+    h1 {
+        display: flex;
+        gap: 1ex;
+        align-items: center;
+    }
+
+    header,
+    section {
+        margin: auto;
+        padding: 0 2ch;
+        max-width: 84ch;
+    }
+
+    footer {
+        margin: 1em auto 0;
+        text-align: center;
+    }
+
+    a {
+        color: tomato;
+    }
+
+    pre,
+    figure {
+        grid-column: 1 / -1;
+        grid-row: 2;
+        margin: 0 2em;
     }
 </style>
