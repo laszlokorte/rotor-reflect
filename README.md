@@ -29,9 +29,7 @@ In general to construct a rotation of angle
 you just need to construct two vectors that enclose an angle
 <code><code class="name-alpha">&alpha;</code> / 2</code> and then use them
 as reflectors for the subject vector.
-</p>
 
-<p>
 The pair of vector <code class="name-u">u</code> and
 <code class="name-s">v</code>
 is called a rotor.
@@ -42,6 +40,7 @@ and <code class="name-s">v</code>
 affect the rotation result. Try drag the arc segment called
 <code class="name-rotor">rotor</code> below to change the direction of both
 reflectors at once.
-</p>![Preview Screenshot](./preview.png)
+
+![Preview Screenshot](./preview.png)
 
 [Live Demo](https://static.laszlokorte.de/rotor-reflect/)
