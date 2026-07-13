@@ -1,5 +1,5 @@
 <script>
-    import favicon from "/static/favicon.svg";
+    const favicon = "/favicon.svg";
     let reflector = $state({
         x: 3,
         y: 2,
@@ -470,6 +470,44 @@
             {@render ctrl(rotor.to, "tomato")}
         </svg>
     </div>
+    <div>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            perserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            {@render vec(subject, "royalblue")}
+            {@render vec(reflector, "teal")}
+            {@render vec(scale(-1, reflector), "teal", "dashed nodir")}
+            {@render vec(reflected, "orchid")}
+
+            {@render vec(rotated, "yellowgreen")}
+            {@render vec(rotor.to, "tomato")}
+            {@render vec(scale(-1, rotor.to), "tomato", "dashed nodir")}
+
+            {#if dot(reflected, subject) * dot(subject, rotated) > 0}
+                {@render arc(subject, reflected, "teal")}
+                {@render arc(reflected, rotated, "tomato")}
+            {:else}
+                {@render arc(subject, reflected, "teal")}
+                {@render arc(reflected, rotated, "tomato")}
+            {/if}
+            {@render label(rotor.to, "Second Reflector", "tomato")}
+            {@render label(subject, "Subject", "royalblue")}
+            {@render label(reflector, "First Reflector", "teal")}
+            {@render label(reflected, "First Reflection", "orchid")}
+
+            {@render label(rotated, "Rotated", "yellowgreen")}
+
+            {@render ctrl(subject, "royalblue")}
+            {@render ctrl(reflector, "teal")}
+            {@render ctrl(reflector2, "tomato")}
+        </svg>
+    </div>
 </figure>
 <section>
     <p>
@@ -565,6 +603,10 @@ const rotateHalf =
     .grid > div {
         background: #fff;
         overflow: visible;
+    }
+
+    .nodir {
+        marker-end: none;
     }
 
     code {
