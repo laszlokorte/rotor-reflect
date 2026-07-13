@@ -1,0 +1,548 @@
+<script>
+    let reflector = $state({
+        x: 3,
+        y: 2,
+    });
+
+    let reflector2 = $state({
+        x: 2,
+        y: 3,
+    });
+
+    let rotor = $derived({
+        from: reflector,
+        to: reflector2,
+    });
+
+    let subject = $state({
+        x: -1,
+        y: 2,
+    });
+
+    function dot(a, b) {
+        return a.x * b.x + a.y * b.y;
+    }
+
+    function det(u, v) {
+        return u.x * v.y - u.y * v.x;
+    }
+
+    function len2(v) {
+        return dot(v, v);
+    }
+
+    function len(v) {
+        return Math.sqrt(dot(v, v));
+    }
+
+    function scale(s, v) {
+        return {
+            x: s * v.x,
+            y: s * v.y,
+        };
+    }
+
+    function norm(v) {
+        return scale(1 / len(v), v);
+    }
+
+    function add(u, v) {
+        return {
+            x: u.x + v.x,
+            y: u.y + v.y,
+        };
+    }
+
+    function subtract(u, v) {
+        return add(u, scale(-1, v));
+    }
+
+    function project(t, s) {
+        return scale(dot(t, s) / len2(s), s);
+    }
+
+    function reflect(r, s) {
+        const projected = project(s, r);
+        const reflected = subtract(scale(2, projected), s);
+
+        return reflected;
+    }
+
+    function rotate(a, b, s) {
+        return reflect(b, reflect(a, s));
+    }
+
+    function rotateHalf(a, b, s) {
+        return rotate(scale(0.5, add(a, b)), b, s);
+    }
+
+    let projected = $derived(
+        scale(dot(subject, reflector) / len2(reflector), reflector),
+    );
+    let reflected = $derived(subtract(scale(2, projected), subject));
+
+    let projected2 = $derived(
+        scale(dot(reflected, reflector2) / len2(reflector2), reflector2),
+    );
+    let rotated = $derived(subtract(scale(2, projected2), reflected));
+
+    const evtToSvg = (evt) => {
+        const svg = evt.currentTarget.ownerSVGElement;
+        const svgPoint = svg.createSVGPoint();
+
+        svgPoint.x = evt.clientX;
+        svgPoint.y = evt.clientY;
+        const svgGlobal = svgPoint.matrixTransform(
+            svg.getScreenCTM().inverse(),
+        );
+
+        return { x: svgGlobal.x, y: svgGlobal.y };
+    };
+</script>
+
+{#snippet vec(v, defaultColor = null, cls = null)}
+    <path
+        class={[cls, "vector"]}
+        marker-end="url(#vector-head)"
+        vector-effect="non-scaling-stroke"
+        d="M 0,0 L {v.x * 100} {v.y * -100}"
+        stroke={defaultColor ?? v.color ?? "red"}
+    />
+{/snippet}
+
+{#snippet line(u, v, defaultColor = null, cls = null)}
+    <path
+        class={[cls, "vector"]}
+        marker-end="url(#vector-head)"
+        vector-effect="non-scaling-stroke"
+        d="M {u.x * 100} {u.y * -100} L {v.x * 100} {v.y * -100}"
+        stroke={defaultColor ?? v.color ?? "#555"}
+    />
+{/snippet}
+
+{#snippet arc(u, v, defaultColor = null, cls = null)}
+    {@const rad = Math.min(len(u), len(v)) * 0.8}
+    {@const un = norm(u)}
+    {@const vn = norm(v)}
+    <path
+        class={[cls, "vector"]}
+        fill-opacity="0.3"
+        vector-effect="non-scaling-stroke"
+        d="M 0 0 L {un.x * 100 * rad}, {un.y * -100 * rad} A {rad * 100} {rad *
+            100} 0 {det(v, u) > 0 ? 1 : 0} 0 {vn.x * 100 * rad}, {vn.y *
+            rad *
+            -100} z"
+        opacity="0.4"
+        fill={defaultColor ?? v.color ?? "red"}
+    />
+    <path
+        class={[cls, "vector"]}
+        fill-opacity="0.3"
+        vector-effect="non-scaling-stroke"
+        d="M {un.x * 100 * rad}, {un.y * -100 * rad} A {rad * 100} {rad *
+            100} 0 {det(v, u) > 0 ? 1 : 0} 0 {vn.x * 100 * rad}, {vn.y *
+            rad *
+            -100}"
+        fill="none"
+        opacity="0.4"
+        stroke={defaultColor ?? v.color ?? "red"}
+    />
+{/snippet}
+
+{#snippet label(v, t, defaultColor = null, cls = null)}
+    <text
+        text-anchor={["start", "middle", "end"][1 - Math.sign(v.x)]}
+        transform="translate(0 {-30 * Math.sign(v.y)})"
+        class={[cls, "label"]}
+        x={v.x * 100}
+        y={v.y * -100}
+        fill={"white"}
+        stroke={defaultColor ?? v.color ?? "red"}
+        stroke-opacity="0.2"
+        stroke-width="6"
+    >
+        {t}
+    </text>
+    <text
+        text-anchor={["start", "middle", "end"][1 - Math.sign(v.x)]}
+        transform="translate(0 {-30 * Math.sign(v.y)})"
+        class={[cls, "label"]}
+        x={v.x * 100}
+        y={v.y * -100}
+        fill={defaultColor ?? v.color ?? "red"}
+    >
+        {t}
+    </text>
+{/snippet}
+{#snippet arclabel(u, v, t, defaultColor, cls)}
+    {@const rad = Math.min(len(u), len(v)) * 0.5}
+    {@const mid = scale(0.5 * (det(u, v) < 0 ? -1 : 1), add(norm(u), norm(v)))}
+    {@const vv = scale(rad, norm(mid))}
+    <text
+        text-anchor={"middle"}
+        class={[cls, "label"]}
+        x={vv.x * 100}
+        y={vv.y * -100}
+        fill={defaultColor ?? v.color ?? "red"}
+    >
+        {t}
+    </text>
+{/snippet}
+
+{#snippet axis()}
+    <line
+        marker-end="url(#vector-head)"
+        class="axis"
+        x1="-500"
+        x2="500"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+        shape-rendering="crispEdges"
+    />
+    <line
+        marker-end="url(#vector-head)"
+        class="axis"
+        y2="-500"
+        y1="500"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+        shape-rendering="crispEdges"
+    />
+    <text class={["axis-label"]} x={500} y={-30} text-anchor="end"> X </text>
+    <text class={["axis-label"]} x={30} y={-470} text-anchor="start"> Y </text>
+{/snippet}
+
+{#snippet ctrl(v, defaultColor = null, cls = null)}
+    <circle
+        onpointerdown={(evt) => {
+            if (evt.isPrimary) {
+                evt.preventDefault();
+                evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                evt.currentTarget._offset = subtract(pos, scale(100, v));
+            }
+        }}
+        onpointermove={(evt) => {
+            if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                evt.preventDefault();
+                const pos = subtract(
+                    reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                    evt.currentTarget._offset,
+                );
+
+                const clamped = scale(Math.min(500, len(pos)), norm(pos));
+
+                v.x = clamped.x / 100;
+                v.y = clamped.y / 100;
+            }
+        }}
+        role="button"
+        tabindex="-1"
+        onkeypress={(evt) => {
+            evt.preventDefault();
+        }}
+        class={[cls, "vector"]}
+        cursor="move"
+        r="40"
+        cx={v.x * 100}
+        cy={v.y * -100}
+        fill="none"
+        pointer-events="all"
+    />
+    <circle
+        pointer-events="none"
+        class={[cls, "vector"]}
+        r="20"
+        opacity="0.3"
+        cx={v.x * 100}
+        cy={v.y * -100}
+        fill={defaultColor ?? v.color ?? "red"}
+    /><circle
+        pointer-events="none"
+        stroke="white"
+        class={[cls, "vector"]}
+        r="10"
+        cx={v.x * 100}
+        cy={v.y * -100}
+        fill={defaultColor ?? v.color ?? "red"}
+    />
+{/snippet}
+
+{#snippet arcctrl(u, v, defaultColor = null, cls = null)}
+    {@const rad = Math.min(len(u), len(v)) * 0.8}
+    {@const un = norm(u)}
+    {@const vn = norm(v)}
+    <path
+        class={[cls, "vector"]}
+        fill-opacity="0.3"
+        vector-effect="non-scaling-stroke"
+        d="M 0 0 L {un.x * 100 * rad}, {un.y * -100 * rad} A {rad * 100} {rad *
+            100} 0 {det(v, u) > 0 ? 1 : 0} 0 {vn.x * 100 * rad}, {vn.y *
+            rad *
+            -100} z"
+        pointer-events="all"
+        cursor="move"
+        fill={defaultColor ?? v.color ?? "red"}
+        onpointerdown={(evt) => {
+            if (evt.isPrimary) {
+                evt.preventDefault();
+                evt.currentTarget.setPointerCapture(evt.pointerId);
+                const pos = evtToSvg(evt);
+                evt.currentTarget._offset = pos;
+            }
+        }}
+        onpointermove={(evt) => {
+            if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                evt.preventDefault();
+                const pos = evtToSvg(evt);
+                const newV = rotateHalf(pos, evt.currentTarget._offset, v);
+                const newU = rotateHalf(pos, evt.currentTarget._offset, u);
+
+                v.x = newV.x;
+                v.y = newV.y;
+                u.x = newU.x;
+                u.y = newU.y;
+                evt.currentTarget._offset = pos;
+            }
+        }}
+        role="button"
+        tabindex="-1"
+        onkeypress={(evt) => {
+            evt.preventDefault();
+        }}
+    />
+{/snippet}
+
+<h1>Rotation via Reflection</h1>
+<p>
+    Any rotation of subject vector <code>s</code> can be achieved by two
+    successive reflections. A reflection at vector <code>u</code> followed by a
+    reflection at vector <code>v</code> results in a rotation in the plane
+    spanned by vectors <code>u</code> and <code>v</code>. The angle of the
+    rotation is twice as large as the angle between vector <code>u</code> and
+    <code>v</code>. So in general to construct a rotation of angle
+    <code>beta</code>
+    you just need to construct two vectors that enclose an angle
+    <code>beta/2</code> and them use them as reflectors for the subject vector.
+</p>
+
+<p>
+    The pair of vector <code>u</code> and <code>v</code> can be called a rotor.
+    Only the relative directions between <code>u</code> and <code>v</code>
+    affect the rotation result. Try drag the arc segment called
+    <code>rotor</code> below to change the direction of both reflectors at once.
+</p>
+
+<div class="grid">
+    <svg
+        class="canvas"
+        viewBox="-500 -500 1000 1000"
+        width="100"
+        height="100"
+        perserveAspectRatio="xMidYMid meet"
+    >
+        {@render axis()}
+        {@render vec(subject, "royalblue")}
+
+        {@render vec(rotor.from, "teal")}
+        {@render vec(rotor.to, "tomato")}
+
+        {@render label(subject, "Subject", "royalblue")}
+        {@render label(rotor.from, "First Reflector", "teal")}
+        {@render label(rotor.to, "Second Reflector", "tomato")}
+
+        {@render arc(rotor.from, rotor.to, "gray")}
+        {@render arclabel(rotor.from, rotor.to, "rotor", "gray")}
+
+        {@render arcctrl(rotor.from, rotor.to, "none")}
+        {@render ctrl(subject, "royalblue")}
+        {@render ctrl(rotor.from, "teal")}
+        {@render ctrl(rotor.to, "tomato")}
+    </svg>
+
+    <svg
+        class="canvas"
+        viewBox="-500 -500 1000 1000"
+        width="100"
+        height="100"
+        perserveAspectRatio="xMidYMid meet"
+    >
+        {@render axis()}
+        {@render line(subject, projected, "black", "dashed faded")}
+        {@render line(projected, reflected, "black", "dashed faded")}
+
+        {@render vec(subject, "royalblue")}
+        {@render vec(reflector, "teal")}
+        {@render vec(reflected, "orchid")}
+        {@render vec(projected, "RosyBrown", "thick")}
+
+        {@render label(subject, "Subject", "royalblue")}
+        {@render label(reflector, "First Reflector", "teal")}
+        {@render label(projected, "Projected", "RosyBrown")}
+        {@render label(reflected, "Reflected", "orchid")}
+
+        {@render ctrl(subject, "royalblue")}
+        {@render ctrl(reflector, "teal")}
+    </svg>
+
+    <svg
+        class="canvas"
+        viewBox="-500 -500 1000 1000"
+        width="100"
+        height="100"
+        perserveAspectRatio="xMidYMid meet"
+    >
+        {@render axis()}
+        {@render line(reflected, projected2, "black", "dashed faded")}
+        {@render line(projected2, rotated, "black", "dashed faded")}
+        {@render vec(subject, "royalblue")}
+
+        {@render vec(rotor.to, "tomato")}
+        {@render vec(reflected, "orchid")}
+        {@render vec(rotated, "yellowgreen")}
+        {@render vec(projected2, "RebeccaPurple", "thick")}
+
+        {@render arc(subject, rotated, "gray")}
+
+        {@render label(subject, "Subject", "royalblue")}
+        {@render label(rotor.to, "Second Reflector", "tomato")}
+        {@render label(projected2, "Projected", "orchid")}
+        {@render label(rotated, "Rotated", "yellowgreen")}
+
+        {@render arcctrl(subject, rotated, "none")}
+        {@render ctrl(subject, "royalblue")}
+        {@render ctrl(rotor.to, "tomato")}
+    </svg>
+    <pre>{`
+// dot ~ similarity in direction
+const dot = (a, b) => a.x * b.x + a.y * b.y
+// det ~ deviation in direction
+const det = (u, v) =>  u.x * v.y - u.y * v.x
+
+const len2 = (v) => dot(v,v)
+cosnt len = (v) => Math.sqrt(len2(v))
+
+const scale = (s,v) => ({x: s * v.x, y: s * v.y})
+const norm = (v) => scale(1 / len(v), v)
+
+const add(u, v) => ({x: u.x + v.x, y: u.y + v.y})
+const subtract(u, v) => add(u, scale(-1, v))
+
+const project = (t, s) => scale(dot(t, s) / len2(s), s)
+
+const reflect = (r,s) => {
+  const projected = project(s, r);
+  const reflected = subtract(scale(2, projected), s);
+  return reflected;
+}
+
+const rotate =
+  (a, b, s) => reflect(b, reflect(a, s))
+
+const rotateHalf =
+  (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
+        `.trim()}
+    </pre>
+</div>
+
+<svg>
+    <defs>
+        <marker
+            id="vector-head"
+            viewBox="0 0 10 10"
+            refX="9"
+            refY="5"
+            markerUnits="userSpaceOnUse"
+            markerWidth="30"
+            markerHeight="30"
+            fill="context-stroke"
+            orient="auto-start-reverse"
+        >
+            <path d="M 10 5 l -10 5 l 3 -5 l -3 -5 z" />
+        </marker>
+    </defs>
+</svg>
+
+<style>
+    pre {
+        margin: 0;
+        padding: 1em;
+        width: 100%;
+        height: 100%;
+        box-sizing: border-box;
+        overflow: auto;
+        line-height: 1.5;
+        color: #fff;
+        background-color: #333;
+        font-size: 1.1em;
+    }
+    :global(body) {
+        font-family: monospace, monospace;
+    }
+    .grid {
+        overflow: visible;
+        box-sizing: border-box;
+        display: block;
+        background: #eee;
+        gap: 0.5ex;
+        padding: 0.5ex;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(20em, 1fr));
+    }
+
+    code {
+        font-family: monospace, monospace;
+        background-color: #eee;
+        padding: 0.25ex;
+        background: #222;
+        color: #fff;
+        border-radius: 2px;
+    }
+
+    .label {
+        transform: translate(0, -100);
+    }
+
+    .canvas {
+        user-select: none;
+        overflow: visible;
+        box-sizing: border-box;
+        padding: 1ex;
+        width: 100%;
+        height: 100%;
+        display: block;
+        background: #fff;
+        overflow: visible;
+    }
+
+    .vector {
+        stroke-width: 2px;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+    }
+    .dashed {
+        stroke-dasharray: 3 10;
+        stroke-width: 3;
+    }
+    .thick {
+        stroke-width: 5;
+        opacity: 0.8;
+    }
+
+    text {
+        font-size: 2em;
+        font-family: monospace, monospace;
+        z-index: 100;
+    }
+
+    .label {
+        pointer-events: none;
+    }
+
+    .faded {
+        opacity: 0.3;
+    }
+</style>
