@@ -1,5 +1,5 @@
 <script lang="ts">
-    const favicon = "/favicon.svg";
+    const favicon = "favicon.svg";
 
     let { children } = $props();
 </script>

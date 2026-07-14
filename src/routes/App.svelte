@@ -1,5 +1,5 @@
 <script>
-    const favicon = "/favicon.svg";
+    const favicon = "favicon.svg";
     let reflector = $state({
         x: 3,
         y: 2,
@@ -84,7 +84,19 @@
     function rotateHalf(a, b, s) {
         return rotate(scale(0.5, add(a, b)), b, s);
     }
+    function isOnCCWArc(a, b, p) {
+        const ab = det(a, b);
 
+        if (ab >= 0) {
+            return det(a, p) >= 0 && det(p, b) >= 0;
+        } else {
+            return det(a, p) >= 0 || det(p, b) >= 0;
+        }
+    }
+
+    function arcDirection(subject, reflected, rotated) {
+        return isOnCCWArc(subject, rotated, reflected);
+    }
     let projected = $derived(
         scale(dot(subject, reflector) / len2(reflector), reflector),
     );
@@ -386,8 +398,13 @@
     </p>
 </header>
 
-<figure class="grid">
-    <div>
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption>
+            The subject vector <code class="name-s">s</code> together with the
+            pair (<code class="name-u">u</code>, <code class="name-v">v</code>)
+            of reflection vectors of the rotor <code>r</code>.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -413,8 +430,19 @@
             {@render ctrl(rotor.from, "teal")}
             {@render ctrl(rotor.to, "tomato")}
         </svg>
-    </div>
-    <div>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            The subject vector <code class="name-s">s</code> is decomposed into
+            the component
+            <code style="background: RosyBrown;">projected</code> onto
+            <code class="name-u">u</code> and the
+            <code
+                style="text-decoration: underline; text-decoration-style: dashed; background-color: #888;"
+                >orthogonal component</code
+            >. The <code style="background-color: orchid;">Reflected</code> vector
+            is recomposed from those components.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -439,8 +467,13 @@
             {@render ctrl(subject, "royalblue")}
             {@render ctrl(reflector, "teal")}
         </svg>
-    </div>
-    <div>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            The <code style="background-color: orchid;">First reflection</code>
+            is then reflected again, this time at the
+            <code class="name-v">Second reflector</code>
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -462,15 +495,22 @@
 
             {@render label(subject, "Subject", "royalblue")}
             {@render label(rotor.to, "Second Reflector", "tomato")}
-            {@render label(projected2, "Projected", "orchid")}
+            {@render label(projected2, "Projected", "RebeccaPurple")}
             {@render label(rotated, "Rotated", "yellowgreen")}
+            {@render label(reflected, "First Reflection", "orchid")}
 
             {@render arcctrl(subject, rotated, "none")}
             {@render ctrl(subject, "royalblue")}
             {@render ctrl(rotor.to, "tomato")}
         </svg>
-    </div>
-    <div>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            Drawing the angles between the interim results that the angle
+            between <code class="name-s">Subject</code> and
+            <code style="background-color: yellowgreen">Rotated</code> is the sum
+            of two angles.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -489,13 +529,14 @@
             {@render vec(rotor.to, "tomato")}
             {@render vec(scale(-1, rotor.to), "tomato", "dashed nodir")}
 
-            {#if dot(reflected, subject) * dot(subject, rotated) > 0}
+            {#if arcDirection(subject, reflected, rotated)}
                 {@render arc(subject, reflected, "teal")}
                 {@render arc(reflected, rotated, "tomato")}
             {:else}
-                {@render arc(subject, reflected, "teal")}
-                {@render arc(reflected, rotated, "tomato")}
+                {@render arc(rotated, reflected, "tomato")}
+                {@render arc(reflected, subject, "teal")}
             {/if}
+
             {@render label(rotor.to, "Second Reflector", "tomato")}
             {@render label(subject, "Subject", "royalblue")}
             {@render label(reflector, "First Reflector", "teal")}
@@ -507,8 +548,8 @@
             {@render ctrl(reflector, "teal")}
             {@render ctrl(reflector2, "tomato")}
         </svg>
-    </div>
-</figure>
+    </figure>
+</div>
 <section>
     <p>
         Take a look at the implementation below. No trigonometric use of <code
@@ -591,6 +632,7 @@ const rotateHalf =
         font-family: monospace, monospace;
     }
     .grid {
+        width: stretch;
         overflow: visible;
         box-sizing: border-box;
         display: block;
@@ -598,14 +640,19 @@ const rotateHalf =
         gap: 0.5ex;
         padding: 0.5ex;
         display: grid;
-        grid-template-columns: repeat(
-            auto-fit,
-            minmax(20em, 1fr) minmax(20em, 1fr)
-        );
+        box-sizing: border-box;
+        max-width: 100ch;
+        margin: auto;
+        grid-template-columns: repeat(auto-fit, minmax(20em, 1fr));
     }
-    .grid > div {
+    .grid-item:nth-child(3) {
+        grid-column: 1;
+    }
+    .grid-item {
         background: #fff;
         overflow: visible;
+        margin: 0;
+        padding: 0;
     }
 
     .nodir {
@@ -622,13 +669,14 @@ const rotateHalf =
     }
 
     .canvas {
+        aspect-ratio: 1 / 1;
         position: relative;
         user-select: none;
         overflow: visible;
         box-sizing: border-box;
         padding: 1ex;
         width: 100%;
-        height: 100%;
+        height: auto;
         display: block;
         overflow: visible;
         z-index: 100;
@@ -663,10 +711,10 @@ const rotateHalf =
     }
 
     .name-u {
-        background-color: tomato;
+        background-color: teal;
     }
     .name-v {
-        background-color: teal;
+        background-color: tomato;
     }
 
     .name-s {
@@ -700,10 +748,20 @@ const rotateHalf =
         color: tomato;
     }
 
-    pre,
-    figure {
+    pre {
         grid-column: 1 / -1;
         grid-row: 2;
         margin: 0 2em;
+    }
+
+    figure {
+        display: flex;
+        flex-direction: column;
+    }
+
+    figcaption {
+        order: 1;
+        padding: 1ex;
+        font-size: 1em;
     }
 </style>
