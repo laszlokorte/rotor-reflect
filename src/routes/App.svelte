@@ -253,6 +253,7 @@
 
 {#snippet ctrl(v, defaultColor = null, cls = null)}
     <circle
+        pointer-events="all"
         onpointerdown={(evt) => {
             if (evt.isPrimary) {
                 evt.preventDefault();
@@ -281,17 +282,16 @@
         onkeypress={(evt) => {
             evt.preventDefault();
         }}
-        class={[cls, "vector"]}
+        class={[cls, "touch-point"]}
         cursor="move"
         r="40"
         cx={v.x * 100}
         cy={v.y * -100}
         fill="none"
-        pointer-events="all"
     />
     <circle
         pointer-events="none"
-        class={[cls, "vector"]}
+        class={[cls]}
         r="20"
         opacity="0.3"
         cx={v.x * 100}
@@ -300,7 +300,7 @@
     /><circle
         pointer-events="none"
         stroke="white"
-        class={[cls, "vector"]}
+        class={[cls]}
         r="10"
         cx={v.x * 100}
         cy={v.y * -100}
@@ -326,6 +326,7 @@
         onpointerdown={(evt) => {
             if (evt.isPrimary) {
                 evt.preventDefault();
+                evt.stopPropagation();
                 evt.currentTarget.setPointerCapture(evt.pointerId);
                 const pos = evtToSvg(evt);
                 evt.currentTarget._offset = pos;
@@ -785,8 +786,8 @@ const rotateHalf =
         display: block;
         overflow: visible;
         z-index: 100;
-        touch-action: none;
         font-size: 2em;
+        touch-action: none;
     }
 
     .vector {
@@ -883,5 +884,15 @@ const rotateHalf =
         display: block;
         padding: 0.1ex 0.5ex;
         border-radius: 3px;
+    }
+
+    text {
+        pointer-events: none;
+    }
+
+    @media (pointer: coarse) {
+        .touch-point {
+            r: 4em;
+        }
     }
 </style>
