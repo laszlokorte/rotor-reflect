@@ -636,22 +636,26 @@ const rotateHalf =
         line-height: 1.5;
         color: #fff;
         background-color: #333;
-        font-size: 1.1em;
+        font-size: 1em;
+
+        margin: 1em auto;
+        max-width: 120ch;
+        font-family: monospace, monospace;
+        box-sizing: border-box;
     }
     :global(body) {
         font-family: monospace, monospace;
     }
     .grid {
-        width: stretch;
         overflow: visible;
-        box-sizing: border-box;
-        display: block;
         background: #eee;
         gap: 0.5ex;
         padding: 0.5ex;
         display: grid;
         box-sizing: border-box;
-        max-width: 100ch;
+        max-width: 120ch;
+        font-size: 1em;
+        font-family: monospace, monospace;
         margin: auto;
         grid-template-columns: repeat(auto-fit, minmax(20em, 1fr));
     }
@@ -760,9 +764,6 @@ const rotateHalf =
     }
 
     pre {
-        grid-column: 1 / -1;
-        grid-row: 2;
-        margin: 0 2em;
     }
 
     figure {
