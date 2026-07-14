@@ -20,6 +20,8 @@
         y: 2,
     });
 
+    let showChiral = $state(true);
+
     function dot(a, b) {
         return a.x * b.x + a.y * b.y;
     }
@@ -118,6 +120,20 @@
         );
 
         return { x: svgGlobal.x, y: svgGlobal.y };
+    };
+
+    const reflectionMatrix = ({ x, y }) => {
+        const xx = x * x;
+        const yy = y * y;
+        const xy = x * y;
+        const d = xx + yy;
+
+        const a = (xx - yy) / d;
+        const b = (2 * xy) / d;
+        const c = (2 * xy) / d;
+        const e = (yy - xx) / d;
+
+        return `matrix(${a} ${b} ${c} ${e} 0 0)`;
     };
 </script>
 
@@ -337,6 +353,35 @@
     />
 {/snippet}
 
+{#snippet chiral(p, color = "red", trans = "")}
+    <g
+        pointer-events="none"
+        opacity="0.4"
+        transform="translate({p.x * 100}, {p.y * -100}) {trans}"
+    >
+        <text
+            text-anchor="middle"
+            x={0}
+            y={0}
+            transform="translate(0 110)"
+            font-size={300}
+            stroke={color}
+            stroke-opacity="0.5"
+            stroke-width="20"
+            fill="#fff">F</text
+        ><text
+            text-anchor="middle"
+            x={0}
+            y={0}
+            transform="translate(0 110)"
+            font-size={300}
+            stroke="none"
+            stroke-width="0"
+            fill="#fff">F</text
+        >
+    </g>
+{/snippet}
+
 <svelte:head>
     <title>Rotation via Double Reflection</title>
 </svelte:head>
@@ -396,6 +441,14 @@
         <code class="name-rotor">rotor</code> below to change the direction of both
         reflectors at once.
     </p>
+
+    <fieldset>
+        <legend>Options</legend>
+        <label>
+            <input type="checkbox" bind:checked={showChiral} />
+            Show chiral figures
+        </label>
+    </fieldset>
 </header>
 
 <div class="grid">
@@ -413,6 +466,10 @@
             height="100"
             perserveAspectRatio="xMidYMid meet"
         >
+            {#if showChiral}
+                {@render chiral(subject, "royalblue")}
+            {/if}
+
             {@render axis()}
             {@render vec(subject, "royalblue")}
 
@@ -451,6 +508,14 @@
             height="100"
             perserveAspectRatio="xMidYMid meet"
         >
+            {#if showChiral}
+                {@render chiral(subject, "royalblue")}
+                {@render chiral(
+                    reflected,
+                    "orchid",
+                    reflectionMatrix({ x: reflector.x, y: -reflector.y }),
+                )}
+            {/if}
             {@render axis()}
             {@render line(subject, projected, "black", "dashed faded")}
             {@render line(projected, reflected, "black", "dashed faded")}
@@ -485,6 +550,18 @@
             height="100"
             perserveAspectRatio="xMidYMid meet"
         >
+            {#if showChiral}
+                {@render chiral(
+                    reflected,
+                    "orchid",
+                    reflectionMatrix({ x: reflector.x, y: -reflector.y }),
+                )}
+                {@render chiral(
+                    rotated,
+                    "yellowgreen",
+                    `${reflectionMatrix({ x: rotor.to.x, y: -rotor.to.y })} ${reflectionMatrix({ x: rotor.from.x, y: -rotor.from.y })}`,
+                )}
+            {/if}
             {@render axis()}
             {@render line(reflected, projected2, "black", "dashed faded")}
             {@render line(projected2, rotated, "black", "dashed faded")}
@@ -529,6 +606,20 @@
             perserveAspectRatio="xMidYMid meet"
         >
             {@render axis()}
+
+            {#if showChiral}
+                {@render chiral(subject, "royalblue")}
+                {@render chiral(
+                    reflected,
+                    "orchid",
+                    reflectionMatrix({ x: reflector.x, y: -reflector.y }),
+                )}
+                {@render chiral(
+                    rotated,
+                    "yellowgreen",
+                    `${reflectionMatrix({ x: rotor.to.x, y: -rotor.to.y })} ${reflectionMatrix({ x: rotor.from.x, y: -rotor.from.y })}`,
+                )}
+            {/if}
 
             {@render vec(subject, "royalblue")}
             {@render vec(reflector, "teal")}
@@ -695,6 +786,7 @@ const rotateHalf =
         overflow: visible;
         z-index: 100;
         touch-action: none;
+        font-size: 2em;
     }
 
     .vector {
@@ -712,7 +804,6 @@ const rotateHalf =
     }
 
     text {
-        font-size: 2em;
         font-family: monospace, monospace;
         z-index: 100;
     }
@@ -776,5 +867,21 @@ const rotateHalf =
         order: 1;
         padding: 1ex;
         font-size: 1em;
+    }
+    label {
+        user-select: none;
+    }
+    fieldset {
+        display: block;
+        border: 2px solid #eee;
+        margin: 1em 0;
+    }
+
+    legend {
+        background-color: #333;
+        color: #fff;
+        display: block;
+        padding: 0.1ex 0.5ex;
+        border-radius: 3px;
     }
 </style>
