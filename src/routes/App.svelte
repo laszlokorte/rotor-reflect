@@ -401,9 +401,10 @@
 <div class="grid">
     <figure class="grid-item">
         <figcaption>
-            The subject vector <code class="name-s">s</code> together with the
-            pair (<code class="name-u">u</code>, <code class="name-v">v</code>)
-            of reflection vectors of the rotor <code>r</code>.
+            The <code class="name-s">Subject</code> together with the pair (<code
+                class="name-u">First</code
+            >, <code class="name-v">Second</code>) of reflection vectors of the
+            <code style="background-color: #888;">rotor</code>.
         </figcaption>
         <svg
             class="canvas"
@@ -433,10 +434,10 @@
     </figure>
     <figure class="grid-item">
         <figcaption>
-            The subject vector <code class="name-s">s</code> is decomposed into
-            the component
-            <code style="background: RosyBrown;">projected</code> onto
-            <code class="name-u">u</code> and the
+            The <code class="name-s">Subject</code> is decomposed into the
+            component
+            <code style="background: RosyBrown;">Projected</code> onto
+            <code class="name-u">First reflector</code> and the
             <code
                 style="text-decoration: underline; text-decoration-style: dashed; background-color: #888;"
                 >orthogonal component</code
@@ -471,8 +472,11 @@
     <figure class="grid-item">
         <figcaption>
             The <code style="background-color: orchid;">First reflection</code>
-            is then reflected again, this time at the
-            <code class="name-v">Second reflector</code>
+            is then reflected again. This time it is
+            <code style="background-color: rebeccapurple;">Projected</code>
+            onto the
+            <code class="name-v">Second Reflector</code>. The result is the
+            <code style="background-color: yellowgreen;">Rotated</code> vector.
         </figcaption>
         <svg
             class="canvas"
@@ -506,10 +510,16 @@
     </figure>
     <figure class="grid-item">
         <figcaption>
-            Drawing the angles between the interim results that the angle
+            Drawing the angles between the interim results shows that the angle
             between <code class="name-s">Subject</code> and
-            <code style="background-color: yellowgreen">Rotated</code> is the sum
-            of two angles.
+            <code style="background-color: yellowgreen">Rotated</code> is the
+            sum of two angles. The one angle is twice the difference between
+            <code class="name-s">Subject</code>
+            and <code class="name-u">First Reflector</code>. The second angle is
+            twice the difference between the
+            <code style="background-color: orchid;">First Reflection</code>
+            and the
+            <code style="background-color: yellowgreen;">Rotated</code> result.
         </figcaption>
         <svg
             class="canvas"
@@ -680,6 +690,7 @@ const rotateHalf =
         display: block;
         overflow: visible;
         z-index: 100;
+        touch-action: none;
     }
 
     .vector {
@@ -760,6 +771,7 @@ const rotateHalf =
     }
 
     figcaption {
+        line-height: 1.75;
         order: 1;
         padding: 1ex;
         font-size: 1em;
