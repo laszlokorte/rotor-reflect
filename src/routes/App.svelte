@@ -1,4 +1,6 @@
 <script>
+    import Scene from "./Scene.svelte";
+
     const favicon = "favicon.svg";
     let reflector = $state({
         x: 3,
@@ -696,6 +698,35 @@ const rotateHalf =
   (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
         `.trim()}
     </pre>
+
+<section>
+    <h2>3 Dimensions</h2>
+    <p>The same approch also works for 3 dimensions and higher dimensions.</p>
+    <p>
+        Below you can see the <code class="name-s">subject</code> vector rotated
+        in the plane spanned by the
+        <code style="background-color: magenta">first</code>
+        and
+        <code style="background-color: teal">second</code> reflector.
+    </p>
+    <p>
+        The reflection at the
+        <code style="background-color: magenta">first reflector</code>
+        mirrors the <code class="name-s">subject</code> onto
+        <code>the first reflection</code>
+        on the opposite side of the plane. The following reflection at the
+        <code style:background-color="teal">second reflector</code> brings the
+        vector back to the original side of the plane. So the orientation
+        between the
+        <code class="name-s">subject</code> and the rotation plane is restored.
+    </p>
+    <p>
+        During this zic-zac motion across the plane the vector still rotates <em
+            >along</em
+        > the plane in the except same ways as in the 2d case above.
+    </p>
+    <Scene></Scene>
+</section>
 
 <footer>
     <a href="//tools.laszlokorte.de" target="_blank">More educational tools</a>
