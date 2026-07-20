@@ -38,7 +38,7 @@
     let bivector = $state({ xy: 5, yz: 6, xz: 7 });
     let rotor = $state({
         to: { x: -2, y: 0, z: 2 },
-        from: { x: 3, y: -2, z: 3 },
+        from: { x: 2, y: -2, z: 4 },
     });
     const reflectionA = $derived(reflect(rotor.from, vector));
     const reflectionB = $derived(reflect(rotor.to, reflectionA));
@@ -162,7 +162,7 @@
                 anchorY="center"
                 fontSize={0.5}
                 color="darkcyan"
-                text="Rotated"
+                text="rotated"
                 renderOrder={10000}
             >
                 <T.MeshBasicMaterial depthTest={false} depthWrite={false} />

@@ -43,4 +43,8 @@ reflectors at once.
 
 ![Preview Screenshot](./preview.png)
 
+![Preview Screenshot (3D)](./preview3d.png)
+
 [Live Demo](https://static.laszlokorte.de/rotor-reflect/)
+
+[Video Demo](https://www.youtube.com/watch?v=jimDpRgTiDM)
