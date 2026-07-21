@@ -50,10 +50,6 @@
     );
 </script>
 
-<svelte:head>
-    <title>3D Scene</title>
-</svelte:head>
-
 <section>
     <Canvas dpr={[1, 2]}>
         <T.PerspectiveCamera
