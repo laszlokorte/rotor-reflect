@@ -675,13 +675,13 @@ const dot = (a, b) => a.x * b.x + a.y * b.y
 const det = (u, v) =>  u.x * v.y - u.y * v.x
 
 const len2 = (v) => dot(v,v)
-cosnt len = (v) => Math.sqrt(len2(v))
+const len = (v) => Math.sqrt(len2(v))
 
 const scale = (s,v) => ({x: s * v.x, y: s * v.y})
 const norm = (v) => scale(1 / len(v), v)
 
-const add(u, v) => ({x: u.x + v.x, y: u.y + v.y})
-const subtract(u, v) => add(u, scale(-1, v))
+const add = (u, v) => ({x: u.x + v.x, y: u.y + v.y})
+const subtract = (u, v) => add(u, scale(-1, v))
 
 const project = (t, s) => scale(dot(t, s) / len2(s), s)
 
