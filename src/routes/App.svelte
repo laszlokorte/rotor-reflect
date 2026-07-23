@@ -12,6 +12,26 @@
         y: 3,
     });
 
+    let circle = $state({
+        center: { x: 1, y: 1 },
+        radius: 1,
+    });
+
+    function circleReflect(c, s) {
+        const v = subtract(s, c.center);
+        const d2 = dot(v, v);
+
+        return add(c.center, scale((c.radius * c.radius) / d2, v));
+    }
+    function circleProject(c, s) {
+        const v = subtract(s, c.center);
+        const d2 = len(v);
+
+        return add(c.center, scale(c.radius / d2, v));
+    }
+    const circleReflected = $derived(circleReflect(circle, subject));
+    const circleProjected = $derived(circleProject(circle, subject));
+
     let rotor = $derived({
         from: reflector,
         to: reflector2,
@@ -309,6 +329,62 @@
         fill={defaultColor ?? v.color ?? "red"}
     />
 {/snippet}
+{#snippet ctrlRad(circle, defaultColor = null, cls = null)}
+    {@const v = add(circle.center, { x: circle.radius, y: 0 })}
+    <circle
+        pointer-events="all"
+        onpointerdown={(evt) => {
+            if (evt.isPrimary) {
+                evt.preventDefault();
+                evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                evt.currentTarget._offset = subtract(pos, scale(100, v));
+            }
+        }}
+        onpointermove={(evt) => {
+            if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                evt.preventDefault();
+                const pos = subtract(
+                    reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                    evt.currentTarget._offset,
+                );
+
+                const clamped = scale(Math.min(500, len(pos)), norm(pos));
+
+                circle.radius = Math.max(0, clamped.x / 100 - circle.center.x);
+            }
+        }}
+        role="button"
+        tabindex="-1"
+        onkeypress={(evt) => {
+            evt.preventDefault();
+        }}
+        class={[cls, "touch-point"]}
+        cursor="move"
+        r="40"
+        cx={v.x * 100}
+        cy={v.y * -100}
+        fill="none"
+    />
+    <circle
+        pointer-events="none"
+        class={[cls]}
+        r="20"
+        opacity="0.3"
+        cx={v.x * 100}
+        cy={v.y * -100}
+        fill={defaultColor ?? v.color ?? "red"}
+    /><circle
+        pointer-events="none"
+        stroke="white"
+        class={[cls]}
+        r="10"
+        cx={v.x * 100}
+        cy={v.y * -100}
+        fill={defaultColor ?? v.color ?? "red"}
+    />
+{/snippet}
 
 {#snippet arcctrl(u, v, defaultColor = null, cls = null)}
     {@const rad = Math.min(len(u), len(v)) * 0.8}
@@ -467,7 +543,7 @@
             viewBox="-500 -500 1000 1000"
             width="100"
             height="100"
-            perserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="xMidYMid meet"
         >
             {#if showChiral}
                 {@render chiral(subject, "royalblue")}
@@ -509,7 +585,7 @@
             viewBox="-500 -500 1000 1000"
             width="100"
             height="100"
-            perserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="xMidYMid meet"
         >
             {#if showChiral}
                 {@render chiral(subject, "royalblue")}
@@ -551,7 +627,7 @@
             viewBox="-500 -500 1000 1000"
             width="100"
             height="100"
-            perserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="xMidYMid meet"
         >
             {#if showChiral}
                 {@render chiral(
@@ -606,7 +682,7 @@
             viewBox="-500 -500 1000 1000"
             width="100"
             height="100"
-            perserveAspectRatio="xMidYMid meet"
+            preserveAspectRatio="xMidYMid meet"
         >
             {@render axis()}
 
@@ -726,6 +802,64 @@ const rotateHalf =
         > the plane in the except same ways as in the 2d case above.
     </p>
     <Scene></Scene>
+</section>
+
+<section>
+    <h2>Circular Reflections</h2>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                fill="limegreen"
+                fill-opacity="0.1"
+                stroke="limegreen"
+                r={circle.radius * 100}
+            ></circle>
+
+            {@render vec(circle.center, "limegreen")}
+            {@render vec(subject, "royalblue")}
+            {@render vec(circleReflected, "rebeccapurple")}
+            {@render line(
+                circleReflected,
+                circleProjected,
+                "gray",
+                "dashed nodir",
+            )}
+            {@render line(subject, circleProjected, "gray", "dashed nodir")}
+            {@render line(
+                circle.center,
+                add(circle.center, { x: circle.radius, y: 0 }),
+                "limegreen",
+                "dashed nodir",
+            )}
+            {@render ctrl(subject, "royalblue")}
+            <circle
+                cx={circleReflected.x * 100}
+                cy={-circleReflected.y * 100}
+                fill="rebeccapurple"
+                r="10"
+            ></circle>
+            <circle
+                cx={circleProjected.x * 100}
+                cy={-circleProjected.y * 100}
+                fill="gray"
+                r="7"
+            ></circle>
+
+            {@render ctrl(circle.center, "limegreen")}
+            {@render ctrlRad(circle, "limegreen")}
+        </svg>
+    </figure>
 </section>
 
 <footer>
