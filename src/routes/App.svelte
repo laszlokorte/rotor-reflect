@@ -16,6 +16,10 @@
         center: { x: 1, y: 1 },
         radius: 1,
     });
+    let circle2 = $state({
+            center: { x: -1, y: 2 },
+            radius: 0.5,
+        });
 
     function circleReflect(c, s) {
         const v = subtract(s, c.center);
@@ -30,7 +34,9 @@
         return add(c.center, scale(c.radius / d2, v));
     }
     const circleReflected = $derived(circleReflect(circle, subject));
+    const circleReflected2 = $derived(circleReflect(circle2, circleReflected));
     const circleProjected = $derived(circleProject(circle, subject));
+    const circleProjected2 = $derived(circleProject(circle2, circleReflected));
 
     let rotor = $derived({
         from: reflector,
@@ -806,6 +812,8 @@ const rotateHalf =
 
 <section>
     <h2>Circular Reflections</h2>
+
+    <div class="grid">
     <figure class="grid-item">
         <figcaption></figcaption>
         <svg
@@ -860,6 +868,71 @@ const rotateHalf =
             {@render ctrlRad(circle, "limegreen")}
         </svg>
     </figure>
+    <figure class="grid-item">
+            <figcaption></figcaption>
+            <svg
+                class="canvas"
+                viewBox="-500 -500 1000 1000"
+                width="100"
+                height="100"
+                preserveAspectRatio="xMidYMid meet"
+            >
+                {@render axis()}
+
+                <circle
+                    cx={circle.center.x * 100}
+                    cy={-circle.center.y * 100}
+                    fill="limegreen"
+                    fill-opacity="0.1"
+                    stroke="limegreen"
+                    r={circle.radius * 100}
+                ></circle>
+                <circle
+                                  cx={circle2.center.x * 100}
+                                  cy={-circle2.center.y * 100}
+                                  fill="tomato"
+                                  fill-opacity="0.1"
+                                  stroke="tomato"
+                                  r={circle2.radius * 100}
+                              ></circle>
+
+                {@render vec(circle.center, "limegreen")}
+                {@render vec(subject, "royalblue")}
+                {@render vec(circleReflected2, "rebeccapurple")}
+                {@render line(
+                    circleReflected2,
+                    circleProjected2,
+                    "gray",
+                    "dashed nodir",
+                )}
+                {@render line(circleReflected, circleProjected2, "gray", "dashed nodir")}
+                {@render line(
+                    circle.center,
+                    add(circle.center, { x: circle.radius, y: 0 }),
+                    "limegreen",
+                    "dashed nodir",
+                )}
+                {@render ctrl(circleReflected, "royalblue")}
+                <circle
+                    cx={circleReflected2.x * 100}
+                    cy={-circleReflected.y * 100}
+                    fill="rebeccapurple"
+                    r="10"
+                ></circle>
+                <circle
+                    cx={circleProjected2.x * 100}
+                    cy={-circleProjected2.y * 100}
+                    fill="gray"
+                    r="7"
+                ></circle>
+
+                {@render ctrl(circle.center, "limegreen")}
+                {@render ctrl(circle2.center, "tomato")}
+                {@render ctrlRad(circle, "limegreen")}
+                {@render ctrlRad(circle2, "tomato")}
+            </svg>
+        </figure>
+    </div>
 </section>
 
 <footer>
