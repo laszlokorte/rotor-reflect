@@ -13,13 +13,13 @@
     });
 
     let circle = $state({
-        center: { x: 1, y: 1 },
-        radius: 1,
+        center: { x: -2, y: -2.5 },
+        radius: 2,
     });
     let circle2 = $state({
-            center: { x: -1, y: 2 },
-            radius: 0.5,
-        });
+        center: { x: 3, y: -2 },
+        radius: 1,
+    });
 
     function circleReflect(c, s) {
         const v = subtract(s, c.center);
@@ -214,10 +214,10 @@
     />
 {/snippet}
 
-{#snippet label(v, t, defaultColor = null, cls = null)}
+{#snippet label(v, t, defaultColor = null, cls = null, autofit = 1)}
     <text
         text-anchor={["start", "middle", "end"][1 - Math.sign(v.x)]}
-        transform="translate(0 {-30 * Math.sign(v.y)})"
+        transform="translate(0 {-30 * Math.sign(v.y) * autofit})"
         class={[cls, "label"]}
         x={v.x * 100}
         y={v.y * -100}
@@ -230,7 +230,7 @@
     </text>
     <text
         text-anchor={["start", "middle", "end"][1 - Math.sign(v.x)]}
-        transform="translate(0 {-30 * Math.sign(v.y)})"
+        transform="translate(0 {-30 * Math.sign(v.y) * autofit})"
         class={[cls, "label"]}
         x={v.x * 100}
         y={v.y * -100}
@@ -337,28 +337,44 @@
 {/snippet}
 {#snippet ctrlRad(circle, defaultColor = null, cls = null)}
     {@const v = add(circle.center, { x: circle.radius, y: 0 })}
+    <!--
+    {@render line(
+            circle.center,
+            add(circle.center, { x: circle.radius, y: 0 }),
+            defaultColor,
+            "dashed nodir thin",
+        )}
+
+    -->
     <circle
-        pointer-events="all"
         onpointerdown={(evt) => {
             if (evt.isPrimary) {
                 evt.preventDefault();
                 evt.currentTarget.setPointerCapture(evt.pointerId);
 
                 const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
-                evt.currentTarget._offset = subtract(pos, scale(100, v));
+                evt.currentTarget._offset =
+                    len(subtract(pos, scale(100, circle.center))) -
+                    circle.radius * 100;
+                console.log(evt.currentTarget._offset);
             }
         }}
         onpointermove={(evt) => {
             if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
                 evt.preventDefault();
-                const pos = subtract(
-                    reflect({ x: 1, y: 0 }, evtToSvg(evt)),
-                    evt.currentTarget._offset,
+                const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+
+                circle.radius = Math.min(
+                    5,
+                    Math.max(
+                        0,
+                        Math.hypot(
+                            Math.abs(pos.x / 100 - circle.center.x),
+                            Math.abs(pos.y / 100 - circle.center.y),
+                        ) -
+                            evt.currentTarget._offset / 100,
+                    ),
                 );
-
-                const clamped = scale(Math.min(500, len(pos)), norm(pos));
-
-                circle.radius = Math.max(0, clamped.x / 100 - circle.center.x);
             }
         }}
         role="button"
@@ -368,27 +384,14 @@
         }}
         class={[cls, "touch-point"]}
         cursor="move"
-        r="40"
-        cx={v.x * 100}
-        cy={v.y * -100}
+        r={circle.radius * 100 + 20}
+        cx={circle.center.x * 100}
+        cy={circle.center.y * -100}
         fill="none"
-    />
-    <circle
-        pointer-events="none"
-        class={[cls]}
-        r="20"
-        opacity="0.3"
-        cx={v.x * 100}
-        cy={v.y * -100}
-        fill={defaultColor ?? v.color ?? "red"}
-    /><circle
-        pointer-events="none"
-        stroke="white"
-        class={[cls]}
-        r="10"
-        cx={v.x * 100}
-        cy={v.y * -100}
-        fill={defaultColor ?? v.color ?? "red"}
+        stroke={defaultColor ?? v.color ?? "red"}
+        stroke-width="40"
+        stroke-opacity="0.1"
+        pointer-events="stroke"
     />
 {/snippet}
 
@@ -811,64 +814,18 @@ const rotateHalf =
 </section>
 
 <section>
-    <h2>Circular Reflections</h2>
+    <h2>Circular Reflections (WIP)</h2>
+    <p>
+        Instead of reflecting on another vector we can also do more complex
+        reflections. One interesting reflection is the circular reflection. Such
+        a circular reflection is achieved by swapping vectors inside of the
+        circle to the outside and vectors from the outside to the inser of the
+        circle while not changing the direction between the circles center and
+        the subject vector.
+    </p>
 
     <div class="grid">
-    <figure class="grid-item">
-        <figcaption></figcaption>
-        <svg
-            class="canvas"
-            viewBox="-500 -500 1000 1000"
-            width="100"
-            height="100"
-            preserveAspectRatio="xMidYMid meet"
-        >
-            {@render axis()}
-
-            <circle
-                cx={circle.center.x * 100}
-                cy={-circle.center.y * 100}
-                fill="limegreen"
-                fill-opacity="0.1"
-                stroke="limegreen"
-                r={circle.radius * 100}
-            ></circle>
-
-            {@render vec(circle.center, "limegreen")}
-            {@render vec(subject, "royalblue")}
-            {@render vec(circleReflected, "rebeccapurple")}
-            {@render line(
-                circleReflected,
-                circleProjected,
-                "gray",
-                "dashed nodir",
-            )}
-            {@render line(subject, circleProjected, "gray", "dashed nodir")}
-            {@render line(
-                circle.center,
-                add(circle.center, { x: circle.radius, y: 0 }),
-                "limegreen",
-                "dashed nodir",
-            )}
-            {@render ctrl(subject, "royalblue")}
-            <circle
-                cx={circleReflected.x * 100}
-                cy={-circleReflected.y * 100}
-                fill="rebeccapurple"
-                r="10"
-            ></circle>
-            <circle
-                cx={circleProjected.x * 100}
-                cy={-circleProjected.y * 100}
-                fill="gray"
-                r="7"
-            ></circle>
-
-            {@render ctrl(circle.center, "limegreen")}
-            {@render ctrlRad(circle, "limegreen")}
-        </svg>
-    </figure>
-    <figure class="grid-item">
+        <figure class="grid-item">
             <figcaption></figcaption>
             <svg
                 class="canvas"
@@ -882,41 +839,102 @@ const rotateHalf =
                 <circle
                     cx={circle.center.x * 100}
                     cy={-circle.center.y * 100}
-                    fill="limegreen"
+                    stroke="teal"
+                    fill="none"
+                    r={circle.radius * 100}
+                ></circle>
+
+                {@render vec(subject, "royalblue")}
+                {@render vec(circleReflected, "orchid")}
+                {@render line(
+                    circleReflected,
+                    circleProjected,
+                    "gray",
+                    "dashed nodir thin",
+                )}
+                {@render line(
+                    subject,
+                    circleProjected,
+                    "gray",
+                    "dashed nodir thin",
+                )}
+
+                {@render ctrl(subject, "royalblue")}
+                <circle
+                    cx={circleReflected.x * 100}
+                    cy={-circleReflected.y * 100}
+                    fill="orchid"
+                    r="10"
+                ></circle>
+                <circle
+                    cx={circleProjected.x * 100}
+                    cy={-circleProjected.y * 100}
+                    fill="gray"
+                    r="4"
+                ></circle>
+
+                {@render label(subject, "Subject", "royalblue")}
+                {@render label(circleReflected, "Reflected", "orchid")}
+                {@render label(
+                    circle.center,
+                    "Circular Reflector",
+                    "teal",
+                    "",
+                    circle.radius * 3,
+                )}
+
+                {@render ctrl(circle.center, "teal")}
+                {@render ctrlRad(circle, "teal")}
+            </svg>
+        </figure>
+        <figure class="grid-item">
+            <figcaption></figcaption>
+            <svg
+                class="canvas"
+                viewBox="-500 -500 1000 1000"
+                width="100"
+                height="100"
+                preserveAspectRatio="xMidYMid meet"
+            >
+                {@render axis()}
+
+                <circle
+                    cx={circle.center.x * 100}
+                    cy={-circle.center.y * 100}
+                    fill="none"
                     fill-opacity="0.1"
-                    stroke="limegreen"
+                    stroke="teal"
                     r={circle.radius * 100}
                 ></circle>
                 <circle
-                                  cx={circle2.center.x * 100}
-                                  cy={-circle2.center.y * 100}
-                                  fill="tomato"
-                                  fill-opacity="0.1"
-                                  stroke="tomato"
-                                  r={circle2.radius * 100}
-                              ></circle>
+                    cx={circle2.center.x * 100}
+                    cy={-circle2.center.y * 100}
+                    fill="none"
+                    fill-opacity="0.1"
+                    stroke="tomato"
+                    r={circle2.radius * 100}
+                ></circle>
 
-                {@render vec(circle.center, "limegreen")}
                 {@render vec(subject, "royalblue")}
-                {@render vec(circleReflected2, "rebeccapurple")}
+                {@render vec(circleReflected2, "yellowgreen")}
+
+                {@render vec(circleReflected, "orchid")}
                 {@render line(
                     circleReflected2,
                     circleProjected2,
                     "gray",
-                    "dashed nodir",
+                    "dashed nodir thin",
                 )}
-                {@render line(circleReflected, circleProjected2, "gray", "dashed nodir")}
                 {@render line(
-                    circle.center,
-                    add(circle.center, { x: circle.radius, y: 0 }),
-                    "limegreen",
-                    "dashed nodir",
+                    circleReflected,
+                    circleProjected2,
+                    "gray",
+                    "dashed nodir thin",
                 )}
-                {@render ctrl(circleReflected, "royalblue")}
                 <circle
-                    cx={circleReflected2.x * 100}
+                    cx={circleReflected.x * 100}
                     cy={-circleReflected.y * 100}
-                    fill="rebeccapurple"
+                    fill="orchid"
                     r="10"
                 ></circle>
                 <circle
@@ -925,11 +943,34 @@ const rotateHalf =
                     fill="gray"
                     r="7"
                 ></circle>
+                {@render label(
+                    circle.center,
+                    "Circular Reflector",
+                    "teal",
+                    "",
+                    circle.radius * 3,
+                )}
+                {@render label(
+                    circle2.center,
+                    "Second Circular Reflector",
+                    "tomato",
+                    "",
+                    -circle2.radius * 3,
+                )}
 
-                {@render ctrl(circle.center, "limegreen")}
-                {@render ctrl(circle2.center, "tomato")}
-                {@render ctrlRad(circle, "limegreen")}
+                {@render label(circleReflected, "Reflected", "orchid")}
+                {@render label(
+                    circleReflected2,
+                    "Reflected Twice",
+                    "yellowgreen",
+                )}
+                {@render label(subject, "Subject", "royalblue")}
+                {@render ctrlRad(circle, "teal")}
                 {@render ctrlRad(circle2, "tomato")}
+
+                {@render ctrl(subject, "royalblue")}
+                {@render ctrl(circle.center, "teal")}
+                {@render ctrl(circle2.center, "tomato")}
             </svg>
         </figure>
     </div>
@@ -1001,6 +1042,9 @@ const rotateHalf =
 
     .nodir {
         marker-end: none;
+    }
+    .thin {
+        stroke-width: 0.5 !important;
     }
 
     code {
