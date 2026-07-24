@@ -51,7 +51,7 @@
 </script>
 
 <section>
-    <Canvas dpr={[1, 2]}>
+    <Canvas dpr={window.devicePixelRatio * 2}>
         <T.PerspectiveCamera
             fov={50}
             makeDefault
@@ -74,14 +74,14 @@
             sectionSize={20}
             fadeDistance={10}
             fadeOrigin={[0, 0, 0]}
-            cellThickness={1}
-            sectionThickness={1}
+            cellThickness={2}
+            sectionThickness={2}
             cellSize={5}
             fadeStrength={1}
             infiniteGrid={true}
-            sectionColor="#333"
+            sectionColor="#999"
             renderOrder={-1}
-            cellColor="#555"
+            cellColor="#ccc"
         />
         <T.AmbientLight />
         <T.DirectionalLight position={[20, 30, 10]}></T.DirectionalLight>

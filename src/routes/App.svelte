@@ -821,11 +821,15 @@ const rotateHalf =
             >along</em
         > the plane in the except same ways as in the 2d case above.
     </p>
-    <Scene></Scene>
 </section>
 
+<div class="grid" style:background="none">
+    <figure class="grid-item">
+        <Scene></Scene>
+    </figure>
+</div>
 <section>
-    <h2>Circular Reflections (WIP)</h2>
+    <h2>Circular Reflections</h2>
     <p>
         Instead of reflecting across a vector, we can also reflect with respect
         to more complex objects. One interesting example is the circular
