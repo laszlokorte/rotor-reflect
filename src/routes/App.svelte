@@ -13,12 +13,12 @@
     });
 
     let circle = $state({
-        center: { x: -2, y: -2.5 },
+        center: { x: -2.5, y: -2.5 },
         radius: 2,
     });
     let circle2 = $state({
-        center: { x: 3, y: -2 },
-        radius: 1,
+        center: { x: 3, y: -0.5 },
+        radius: 2,
     });
 
     function circleReflect(c, s) {
@@ -214,9 +214,18 @@
     />
 {/snippet}
 
-{#snippet label(v, t, defaultColor = null, cls = null, autofit = 1)}
+{#snippet label(
+    v,
+    t,
+    defaultColor = null,
+    cls = null,
+    autofit = 1,
+    autoalign = true,
+)}
     <text
-        text-anchor={["start", "middle", "end"][1 - Math.sign(v.x)]}
+        text-anchor={["start", "middle", "end"][
+            1 - Math.sign(v.x) * (autoalign ? 1 : 0)
+        ]}
         transform="translate(0 {-30 * Math.sign(v.y) * autofit})"
         class={[cls, "label"]}
         x={v.x * 100}
@@ -229,7 +238,9 @@
         {t}
     </text>
     <text
-        text-anchor={["start", "middle", "end"][1 - Math.sign(v.x)]}
+        text-anchor={["start", "middle", "end"][
+            1 - Math.sign(v.x) * (autoalign ? 1 : 0)
+        ]}
         transform="translate(0 {-30 * Math.sign(v.y) * autofit})"
         class={[cls, "label"]}
         x={v.x * 100}
@@ -816,165 +827,180 @@ const rotateHalf =
 <section>
     <h2>Circular Reflections (WIP)</h2>
     <p>
-        Instead of reflecting on another vector we can also do more complex
-        reflections. One interesting reflection is the circular reflection. Such
-        a circular reflection is achieved by swapping vectors inside of the
-        circle to the outside and vectors from the outside to the inser of the
-        circle while not changing the direction between the circles center and
-        the subject vector.
+        Instead of reflecting across a vector, we can also reflect with respect
+        to more complex objects. One interesting example is the circular
+        reflection. A circular reflection maps points inside the circle to the
+        outside and points outside the circle to the inside, while preserving
+        the direction from the circle's center to the reflected point. In other
+        words, the reflected point always lies on the same ray originating at
+        the circle's center; only its distance from the center changes.
     </p>
-
-    <div class="grid">
-        <figure class="grid-item">
-            <figcaption></figcaption>
-            <svg
-                class="canvas"
-                viewBox="-500 -500 1000 1000"
-                width="100"
-                height="100"
-                preserveAspectRatio="xMidYMid meet"
-            >
-                {@render axis()}
-
-                <circle
-                    cx={circle.center.x * 100}
-                    cy={-circle.center.y * 100}
-                    stroke="teal"
-                    fill="none"
-                    r={circle.radius * 100}
-                ></circle>
-
-                {@render vec(subject, "royalblue")}
-                {@render vec(circleReflected, "orchid")}
-                {@render line(
-                    circleReflected,
-                    circleProjected,
-                    "gray",
-                    "dashed nodir thin",
-                )}
-                {@render line(
-                    subject,
-                    circleProjected,
-                    "gray",
-                    "dashed nodir thin",
-                )}
-
-                {@render ctrl(subject, "royalblue")}
-                <circle
-                    cx={circleReflected.x * 100}
-                    cy={-circleReflected.y * 100}
-                    fill="orchid"
-                    r="10"
-                ></circle>
-                <circle
-                    cx={circleProjected.x * 100}
-                    cy={-circleProjected.y * 100}
-                    fill="gray"
-                    r="4"
-                ></circle>
-
-                {@render label(subject, "Subject", "royalblue")}
-                {@render label(circleReflected, "Reflected", "orchid")}
-                {@render label(
-                    circle.center,
-                    "Circular Reflector",
-                    "teal",
-                    "",
-                    circle.radius * 3,
-                )}
-
-                {@render ctrl(circle.center, "teal")}
-                {@render ctrlRad(circle, "teal")}
-            </svg>
-        </figure>
-        <figure class="grid-item">
-            <figcaption></figcaption>
-            <svg
-                class="canvas"
-                viewBox="-500 -500 1000 1000"
-                width="100"
-                height="100"
-                preserveAspectRatio="xMidYMid meet"
-            >
-                {@render axis()}
-
-                <circle
-                    cx={circle.center.x * 100}
-                    cy={-circle.center.y * 100}
-                    fill="none"
-                    fill-opacity="0.1"
-                    stroke="teal"
-                    r={circle.radius * 100}
-                ></circle>
-                <circle
-                    cx={circle2.center.x * 100}
-                    cy={-circle2.center.y * 100}
-                    fill="none"
-                    fill-opacity="0.1"
-                    stroke="tomato"
-                    r={circle2.radius * 100}
-                ></circle>
-
-                {@render vec(subject, "royalblue")}
-                {@render vec(circleReflected2, "yellowgreen")}
-
-                {@render vec(circleReflected, "orchid")}
-                {@render line(
-                    circleReflected2,
-                    circleProjected2,
-                    "gray",
-                    "dashed nodir thin",
-                )}
-                {@render line(
-                    circleReflected,
-                    circleProjected2,
-                    "gray",
-                    "dashed nodir thin",
-                )}
-                <circle
-                    cx={circleReflected.x * 100}
-                    cy={-circleReflected.y * 100}
-                    fill="orchid"
-                    r="10"
-                ></circle>
-                <circle
-                    cx={circleProjected2.x * 100}
-                    cy={-circleProjected2.y * 100}
-                    fill="gray"
-                    r="7"
-                ></circle>
-                {@render label(
-                    circle.center,
-                    "Circular Reflector",
-                    "teal",
-                    "",
-                    circle.radius * 3,
-                )}
-                {@render label(
-                    circle2.center,
-                    "Second Circular Reflector",
-                    "tomato",
-                    "",
-                    -circle2.radius * 3,
-                )}
-
-                {@render label(circleReflected, "Reflected", "orchid")}
-                {@render label(
-                    circleReflected2,
-                    "Reflected Twice",
-                    "yellowgreen",
-                )}
-                {@render label(subject, "Subject", "royalblue")}
-                {@render ctrlRad(circle, "teal")}
-                {@render ctrlRad(circle2, "tomato")}
-
-                {@render ctrl(subject, "royalblue")}
-                {@render ctrl(circle.center, "teal")}
-                {@render ctrl(circle2.center, "tomato")}
-            </svg>
-        </figure>
-    </div>
+    <p>
+        For a circle with radius (<math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+        >
+            <mi>R</mi>
+        </math>), a point at distance (<math
+            xmlns="http://www.w3.org/1998/Math/MathML"
+        >
+            <mi>r</mi>
+        </math>) from the center is mapped to a point at distance
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            <mfrac>
+                <msup>
+                    <mi>R</mi>
+                    <mn>2</mn>
+                </msup>
+                <mi>r</mi>
+            </mfrac>
+        </math>.
+    </p>
 </section>
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                stroke="teal"
+                fill="none"
+                r={circle.radius * 100}
+            ></circle>
+
+            {@render line(
+                circleProjected,
+                circleReflected,
+                "teal",
+                "dashed thin",
+            )}
+            {@render line(subject, circleProjected, "teal", "dashed thin")}
+            {@render vec(subject, "royalblue")}
+            {@render vec(circleReflected, "orchid")}
+
+            {@render ctrl(subject, "royalblue")}
+            <circle
+                cx={circleReflected.x * 100}
+                cy={-circleReflected.y * 100}
+                fill="orchid"
+                r="10"
+            ></circle>
+            <circle
+                cx={circleProjected.x * 100}
+                cy={-circleProjected.y * 100}
+                fill="teal"
+                r="5"
+            ></circle>
+
+            {@render label(subject, "Subject", "royalblue")}
+            {@render label(circleReflected, "Reflected", "orchid")}
+            {@render label(
+                circle.center,
+                "Circular Reflector",
+                "teal",
+                "",
+                circle.radius * 3,
+                false,
+            )}
+
+            {@render ctrl(circle.center, "teal")}
+            {@render ctrlRad(circle, "teal")}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                fill="none"
+                fill-opacity="0.1"
+                stroke="teal"
+                r={circle.radius * 100}
+            ></circle>
+            <circle
+                cx={circle2.center.x * 100}
+                cy={-circle2.center.y * 100}
+                fill="none"
+                fill-opacity="0.1"
+                stroke="tomato"
+                r={circle2.radius * 100}
+            ></circle>
+
+            {@render vec(circleReflected, "orchid")}
+            {@render line(
+                circleProjected2,
+                circleReflected2,
+                "tomato",
+                "dashed  thin",
+            )}
+            {@render line(
+                circleReflected,
+                circleProjected2,
+                "tomato",
+                "dashed  thin",
+            )}
+
+            {@render vec(subject, "royalblue")}
+            {@render vec(circleReflected2, "yellowgreen")}
+
+            <circle
+                cx={circleReflected.x * 100}
+                cy={-circleReflected.y * 100}
+                fill="orchid"
+                r="10"
+            ></circle>
+            <circle
+                cx={circleProjected2.x * 100}
+                cy={-circleProjected2.y * 100}
+                fill="tomato"
+                r="5"
+            ></circle>
+            {@render label(
+                circle.center,
+                "Circular Reflector",
+                "teal",
+                "",
+                circle.radius * 3,
+                false,
+            )}
+            {@render label(
+                circle2.center,
+                "Second Circular Reflector",
+                "tomato",
+                "",
+                -circle2.radius * 3,
+                false,
+            )}
+
+            {@render label(circleReflected, "Reflected", "orchid")}
+            {@render label(circleReflected2, "Reflected Twice", "yellowgreen")}
+            {@render label(subject, "Subject", "royalblue")}
+            {@render ctrlRad(circle, "teal")}
+            {@render ctrlRad(circle2, "tomato")}
+
+            {@render ctrl(subject, "royalblue")}
+            {@render ctrl(circle.center, "teal")}
+            {@render ctrl(circle2.center, "tomato")}
+        </svg>
+    </figure>
+</div>
 
 <footer>
     <a href="//tools.laszlokorte.de" target="_blank">More educational tools</a>
