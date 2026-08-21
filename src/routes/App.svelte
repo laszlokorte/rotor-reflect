@@ -18,7 +18,17 @@
     });
     let circle2 = $state({
         center: { x: 3, y: -0.5 },
-        radius: 2,
+        radius: 1.5,
+    });
+    const circle3 = $derived({
+        center: circle.center,
+        radius: circle2.radius,
+    });
+
+    let trans = $state({
+        center: scale(5, norm({ x: 3, y: -1 })),
+        radiusA: 4,
+        radiusB: 2,
     });
 
     function circleReflect(c, s) {
@@ -33,10 +43,17 @@
 
         return add(c.center, scale(c.radius / d2, v));
     }
+
+    function circleScale(circleA, circleB, v) {
+        const dotCircledReflected = circleReflect(circleA, v);
+        return circleReflect(circleB, dotCircledReflected);
+    }
+
     const circleReflected = $derived(circleReflect(circle, subject));
     const circleReflected2 = $derived(circleReflect(circle2, circleReflected));
     const circleProjected = $derived(circleProject(circle, subject));
     const circleProjected2 = $derived(circleProject(circle2, circleReflected));
+    const circleScaled = $derived(circleScale(circle, circle3, subject));
 
     let rotor = $derived({
         from: reflector,
@@ -163,6 +180,394 @@
 
         return `matrix(${a} ${b} ${c} ${e} 0 0)`;
     };
+
+    const gridSize = 8;
+
+    function fShape(x, y) {
+        return (
+            x < (gridSize * 4) / 3 &&
+            (x < 3 || y < 3 || (x <= gridSize && Math.abs(y - gridSize) < 2))
+        );
+    }
+
+    const fGrid = [
+        {
+            x: 0,
+            y: 0,
+        },
+        {
+            x: 0,
+            y: 1,
+        },
+        {
+            x: 0,
+            y: 2,
+        },
+        {
+            x: 0,
+            y: 3,
+        },
+        {
+            x: 0,
+            y: 4,
+        },
+        {
+            x: 0,
+            y: 5,
+        },
+        {
+            x: 0,
+            y: 6,
+        },
+        {
+            x: 0,
+            y: 7,
+        },
+        {
+            x: 0,
+            y: 8,
+        },
+        {
+            x: 0,
+            y: 9,
+        },
+        {
+            x: 0,
+            y: 10,
+        },
+        {
+            x: 0,
+            y: 11,
+        },
+        {
+            x: 0,
+            y: 12,
+        },
+        {
+            x: 0,
+            y: 13,
+        },
+        {
+            x: 0,
+            y: 14,
+        },
+        {
+            x: 0,
+            y: 15,
+        },
+        {
+            x: 0,
+            y: 16,
+        },
+        {
+            x: 1,
+            y: 0,
+        },
+        {
+            x: 1,
+            y: 1,
+        },
+        {
+            x: 1,
+            y: 2,
+        },
+        {
+            x: 1,
+            y: 3,
+        },
+        {
+            x: 1,
+            y: 4,
+        },
+        {
+            x: 1,
+            y: 5,
+        },
+        {
+            x: 1,
+            y: 6,
+        },
+        {
+            x: 1,
+            y: 7,
+        },
+        {
+            x: 1,
+            y: 8,
+        },
+        {
+            x: 1,
+            y: 9,
+        },
+        {
+            x: 1,
+            y: 10,
+        },
+        {
+            x: 1,
+            y: 11,
+        },
+        {
+            x: 1,
+            y: 12,
+        },
+        {
+            x: 1,
+            y: 13,
+        },
+        {
+            x: 1,
+            y: 14,
+        },
+        {
+            x: 1,
+            y: 15,
+        },
+        {
+            x: 1,
+            y: 16,
+        },
+        {
+            x: 2,
+            y: 0,
+        },
+        {
+            x: 2,
+            y: 1,
+        },
+        {
+            x: 2,
+            y: 2,
+        },
+        {
+            x: 2,
+            y: 3,
+        },
+        {
+            x: 2,
+            y: 4,
+        },
+        {
+            x: 2,
+            y: 5,
+        },
+        {
+            x: 2,
+            y: 6,
+        },
+        {
+            x: 2,
+            y: 7,
+        },
+        {
+            x: 2,
+            y: 8,
+        },
+        {
+            x: 2,
+            y: 9,
+        },
+        {
+            x: 2,
+            y: 10,
+        },
+        {
+            x: 2,
+            y: 11,
+        },
+        {
+            x: 2,
+            y: 12,
+        },
+        {
+            x: 2,
+            y: 13,
+        },
+        {
+            x: 2,
+            y: 14,
+        },
+        {
+            x: 2,
+            y: 15,
+        },
+        {
+            x: 2,
+            y: 16,
+        },
+        {
+            x: 3,
+            y: 0,
+        },
+        {
+            x: 3,
+            y: 1,
+        },
+        {
+            x: 3,
+            y: 2,
+        },
+        {
+            x: 3,
+            y: 7,
+        },
+        {
+            x: 3,
+            y: 8,
+        },
+        {
+            x: 3,
+            y: 9,
+        },
+        {
+            x: 4,
+            y: 0,
+        },
+        {
+            x: 4,
+            y: 1,
+        },
+        {
+            x: 4,
+            y: 2,
+        },
+        {
+            x: 4,
+            y: 7,
+        },
+        {
+            x: 4,
+            y: 8,
+        },
+        {
+            x: 4,
+            y: 9,
+        },
+        {
+            x: 5,
+            y: 0,
+        },
+        {
+            x: 5,
+            y: 1,
+        },
+        {
+            x: 5,
+            y: 2,
+        },
+        {
+            x: 5,
+            y: 7,
+        },
+        {
+            x: 5,
+            y: 8,
+        },
+        {
+            x: 5,
+            y: 9,
+        },
+        {
+            x: 6,
+            y: 0,
+        },
+        {
+            x: 6,
+            y: 1,
+        },
+        {
+            x: 6,
+            y: 2,
+        },
+        {
+            x: 6,
+            y: 7,
+        },
+        {
+            x: 6,
+            y: 8,
+        },
+        {
+            x: 6,
+            y: 9,
+        },
+        {
+            x: 7,
+            y: 0,
+        },
+        {
+            x: 7,
+            y: 1,
+        },
+        {
+            x: 7,
+            y: 2,
+        },
+        {
+            x: 7,
+            y: 7,
+        },
+        {
+            x: 7,
+            y: 8,
+        },
+        {
+            x: 7,
+            y: 9,
+        },
+        {
+            x: 8,
+            y: 0,
+        },
+        {
+            x: 8,
+            y: 1,
+        },
+        {
+            x: 8,
+            y: 2,
+        },
+        {
+            x: 8,
+            y: 7,
+        },
+        {
+            x: 8,
+            y: 8,
+        },
+        {
+            x: 8,
+            y: 9,
+        },
+        {
+            x: 9,
+            y: 0,
+        },
+        {
+            x: 9,
+            y: 1,
+        },
+        {
+            x: 9,
+            y: 2,
+        },
+        {
+            x: 10,
+            y: 0,
+        },
+        {
+            x: 10,
+            y: 1,
+        },
+        {
+            x: 10,
+            y: 2,
+        },
+    ];
+
+    function translate(t, v) {
+        return add(v, scale(t.radiusA - t.radiusB, norm(t.center)));
+    }
 </script>
 
 {#snippet vec(v, defaultColor = null, cls = null)}
@@ -290,7 +695,7 @@
     <text class={["axis-label"]} x={30} y={-470} text-anchor="start"> Y </text>
 {/snippet}
 
-{#snippet ctrl(v, defaultColor = null, cls = null)}
+{#snippet ctrl(v, defaultColor = null, cls = null, s = false)}
     <circle
         pointer-events="all"
         onpointerdown={(evt) => {
@@ -310,7 +715,10 @@
                     evt.currentTarget._offset,
                 );
 
-                const clamped = scale(Math.min(500, len(pos)), norm(pos));
+                const clamped = scale(
+                    s ? s : Math.min(500, len(pos)),
+                    norm(pos),
+                );
 
                 v.x = clamped.x / 100;
                 v.y = clamped.y / 100;
@@ -346,17 +754,10 @@
         fill={defaultColor ?? v.color ?? "red"}
     />
 {/snippet}
-{#snippet ctrlRad(circle, defaultColor = null, cls = null)}
-    {@const v = add(circle.center, { x: circle.radius, y: 0 })}
-    <!--
-    {@render line(
-            circle.center,
-            add(circle.center, { x: circle.radius, y: 0 }),
-            defaultColor,
-            "dashed nodir thin",
-        )}
+{#snippet ctrlRad(circle, defaultColor = null, cls = null, forceCenter = null)}
+    {@const center = forceCenter || circle.center}
+    {@const v = add(center, { x: circle.radius, y: 0 })}
 
-    -->
     <circle
         onpointerdown={(evt) => {
             if (evt.isPrimary) {
@@ -365,9 +766,8 @@
 
                 const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
                 evt.currentTarget._offset =
-                    len(subtract(pos, scale(100, circle.center))) -
+                    len(subtract(pos, scale(100, center))) -
                     circle.radius * 100;
-                console.log(evt.currentTarget._offset);
             }
         }}
         onpointermove={(evt) => {
@@ -380,8 +780,8 @@
                     Math.max(
                         0,
                         Math.hypot(
-                            Math.abs(pos.x / 100 - circle.center.x),
-                            Math.abs(pos.y / 100 - circle.center.y),
+                            Math.abs(pos.x / 100 - center.x),
+                            Math.abs(pos.y / 100 - center.y),
                         ) -
                             evt.currentTarget._offset / 100,
                     ),
@@ -396,14 +796,88 @@
         class={[cls, "touch-point"]}
         cursor="move"
         r={circle.radius * 100 + 20}
-        cx={circle.center.x * 100}
-        cy={circle.center.y * -100}
+        cx={center.x * 100}
+        cy={center.y * -100}
         fill="none"
         stroke={defaultColor ?? v.color ?? "red"}
         stroke-width="40"
         stroke-opacity="0.1"
         pointer-events="stroke"
     />
+{/snippet}
+{#snippet ctrlTransRads(trans, defaultColors = [], cls = null)}
+    {@const center = trans.center}
+    {#each ["radiusA", "radiusB"] as rad, i}
+        {@const v = add(center, { x: trans[rad], y: 0 })}
+        <path
+            role="button"
+            tabindex="-1"
+            onkeypress={(evt) => {
+                evt.preventDefault();
+            }}
+            class={[cls, "touch-point"]}
+            cursor="move"
+            d="M{center.x * (trans[rad] * 20 + 4) + center.y * 100}
+            {center.y * -(trans[rad] * 20 + 4) + center.x * 100}
+            Q
+            {center.x * (trans[rad] * 20 - 15)}
+            {center.y * -(trans[rad] * 20 - 15)}
+            {center.x * (trans[rad] * 20 + 4) - center.y * 100}
+            {center.y * -(trans[rad] * 20 + 4) - center.x * 100}"
+            fill="none"
+            stroke={defaultColors[i] ?? v.color ?? "red"}
+            stroke-width="4"
+            stroke-opacity="0.3"
+            pointer-events="stroke"
+        />
+        <path
+            onpointerdown={(evt) => {
+                if (evt.isPrimary) {
+                    evt.preventDefault();
+                    evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                    evt.currentTarget._offset =
+                        dot(scale(1 / 100, pos), norm(center)) - trans[rad];
+                }
+            }}
+            onpointermove={(evt) => {
+                if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                    evt.preventDefault();
+                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+
+                    trans[rad] = Math.min(
+                        5,
+                        Math.max(
+                            -4,
+                            dot(norm(center), scale(1 / 100, pos)) -
+                                evt.currentTarget._offset,
+                        ),
+                    );
+                }
+            }}
+            role="button"
+            tabindex="-1"
+            onkeypress={(evt) => {
+                evt.preventDefault();
+            }}
+            stroke-linecap="round"
+            class={[cls, "touch-point"]}
+            cursor="move"
+            d="M{center.x * (trans[rad] * 20) + center.y * 100}
+                     {center.y * -(trans[rad] * 20) + center.x * 100}
+                     Q
+                     {center.x * (trans[rad] * 20 - 19)}
+                     {center.y * -(trans[rad] * 20 - 19)}
+                     {center.x * (trans[rad] * 20) - center.y * 100}
+                     {center.y * -(trans[rad] * 20) - center.x * 100}"
+            fill="none"
+            stroke={defaultColors[i] ?? v.color ?? "red"}
+            stroke-width="40"
+            stroke-opacity="0.1"
+            pointer-events="stroke"
+        />
+    {/each}
 {/snippet}
 
 {#snippet arcctrl(u, v, defaultColor = null, cls = null)}
@@ -859,10 +1333,32 @@ const rotateHalf =
             </mfrac>
         </math>.
     </p>
+
+    <p>
+        The propper name for this is Circle Inversion. If you imagine the circle
+        with its center really far away but its radius also really large you can
+        think of it acting as straight line. In this way Circle Inversion is a
+        generalization of a reflection on a line.
+    </p>
+
+    <fieldset>
+        <legend>Options</legend>
+        <label>
+            <input type="checkbox" bind:checked={showChiral} />
+            Show chiral figures
+        </label>
+    </fieldset>
 </section>
 <div class="grid">
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            <code class="name-s">Subjects</code> outside the
+            <code style:background-color="teal">reflector circle</code> get
+            <code style:background-color="orchid">reflected</code>
+            to the inside.
+            <code class="name-s">Subjects</code> from the inside the circle get
+            <code style:background-color="orchid">reflected</code> to the outside.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -871,6 +1367,53 @@ const rotateHalf =
             preserveAspectRatio="xMidYMid meet"
         >
             {@render axis()}
+
+            {#if showChiral}
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        <circle
+                            text-anchor="middle"
+                            cx={dot.x * 100}
+                            cy={-dot.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="royalblue"
+                        />
+                        >
+                    {/each}
+                </g>
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        {@const dotCircledReflected = circleReflect(
+                            circle,
+                            dot,
+                        )}
+                        <circle
+                            text-anchor="middle"
+                            cx={dotCircledReflected.x * 100}
+                            cy={-dotCircledReflected.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="orchid"
+                        />
+                        >
+                    {/each}
+                </g>
+            {/if}
 
             <circle
                 cx={circle.center.x * 100}
@@ -920,7 +1463,14 @@ const rotateHalf =
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            A <code style:background-color="tomato">second circle</code> can be
+            used to on the result from the
+            <code style:background-color="orchid">first reflection</code>
+            to
+            <code style:background-color="yellowgreen">reflect</code>
+            them again.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -929,6 +1479,60 @@ const rotateHalf =
             preserveAspectRatio="xMidYMid meet"
         >
             {@render axis()}
+            {#if showChiral}
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        {@const dotCircledReflected = circleReflect(
+                            circle,
+                            dot,
+                        )}
+                        <circle
+                            text-anchor="middle"
+                            cx={dotCircledReflected.x * 100}
+                            cy={-dotCircledReflected.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="orchid"
+                        />
+                        >
+                    {/each}
+                </g>
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        {@const dotCircledReflected = circleReflect(
+                            circle,
+                            dot,
+                        )}
+                        {@const dotCircledReflectedTwice = circleReflect(
+                            circle2,
+                            dotCircledReflected,
+                        )}
+                        <circle
+                            text-anchor="middle"
+                            cx={dotCircledReflectedTwice.x * 100}
+                            cy={-dotCircledReflectedTwice.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="yellowgreen"
+                        />
+                        >
+                    {/each}
+                </g>
+            {/if}
 
             <circle
                 cx={circle.center.x * 100}
@@ -1002,6 +1606,228 @@ const rotateHalf =
             {@render ctrl(subject, "royalblue")}
             {@render ctrl(circle.center, "teal")}
             {@render ctrl(circle2.center, "tomato")}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            If the center of the <code style:background-color="teal">first</code
+            >
+            and
+            <code style:background-color="tomato">second</code> are equal, the
+            second reflection counters the distortion caused by the first
+            reflection. The
+            <code style:background-color="yellowgreen">final result</code> is the
+            linear scaling with the circles center as pivot and the ratio of their
+            radii as scaling factor.
+        </figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+            {#if showChiral}
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        {@const dotCircledReflected = circleReflect(
+                            circle,
+                            dot,
+                        )}
+                        <circle
+                            text-anchor="middle"
+                            cx={dotCircledReflected.x * 100}
+                            cy={-dotCircledReflected.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="orchid"
+                        />
+                        >
+                    {/each}
+                </g>
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        <circle
+                            text-anchor="middle"
+                            cx={dot.x * 100}
+                            cy={-dot.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="royalblue"
+                        />
+                        >
+                    {/each}
+                </g>
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        {@const dotCircledReflected = circleReflect(
+                            circle,
+                            dot,
+                        )}
+                        {@const dotCircledReflectedTwice = circleReflect(
+                            circle3,
+                            dotCircledReflected,
+                        )}
+                        <circle
+                            text-anchor="middle"
+                            cx={dotCircledReflectedTwice.x * 100}
+                            cy={-dotCircledReflectedTwice.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="yellowgreen"
+                        />
+                        >
+                    {/each}
+                </g>
+            {/if}
+
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                fill="none"
+                fill-opacity="0.1"
+                stroke="teal"
+                r={circle.radius * 100}
+            ></circle>
+            <circle
+                cx={circle3.center.x * 100}
+                cy={-circle3.center.y * 100}
+                fill="none"
+                fill-opacity="0.1"
+                stroke="tomato"
+                r={circle3.radius * 100}
+            ></circle>
+
+            {@render vec(circleReflected, "orchid")}
+
+            {@render vec(subject, "royalblue")}
+            {@render vec(circleScaled, "yellowgreen")}
+
+            {@render ctrlRad(circle, "teal")}
+            {@render ctrlRad(circle2, "tomato", null, circle.center)}
+
+            {@render ctrl(subject, "royalblue")}
+            {@render ctrl(circle.center, "teal")}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            If the common center both the <code style:background-color="teal"
+                >first</code
+            >
+            and the
+            <code style:background-color="tomato">second</code> circle is really
+            far away, the scaling around this far pivot will cause the
+            <code class="name-s">subject</code> to be
+            <code style:background-color="yellowgreen">translated</code>.
+        </figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+            {#if showChiral}
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        <circle
+                            text-anchor="middle"
+                            cx={dot.x * 100}
+                            cy={-dot.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="royalblue"
+                        />
+                        >
+                    {/each}
+                </g>
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        {@const dotCircleTranslated = translate(trans, dot)}
+                        <circle
+                            text-anchor="middle"
+                            cx={dotCircleTranslated.x * 100}
+                            cy={-dotCircleTranslated.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill="yellowgreen"
+                        />
+                        >
+                    {/each}
+                </g>
+            {/if}
+            <circle
+                cx="0"
+                cy="0"
+                r="500"
+                fill="none"
+                stroke="#aaa"
+                stroke-dasharray="20 20"
+            ></circle>
+            <mask id="far-mask">
+                <circle
+                    cx="0"
+                    cy="0"
+                    r="500"
+                    fill="white"
+                    stroke="#aaa"
+                    stroke-dasharray="20 20"
+                ></circle>
+            </mask>
+            {@render vec(translate(trans, subject), "yellowgreen")}
+            {@render label(subject, "subject", "royalblue")}
+            {@render label(trans.center, "Far away center", "teal")}
+            {@render label(
+                translate(trans, subject),
+                "translated result",
+                "yellowgreen",
+            )}
+
+            {@render vec(subject, "royalblue")}
+            <g mask="url(#far-mask)">
+                {@render ctrlTransRads(trans, ["tomato", "teal"])}
+            </g>
+
+            {@render ctrl(subject, "royalblue")}
+            {@render ctrl(trans.center, "teal", null, 500)}
         </svg>
     </figure>
 </div>
@@ -1167,9 +1993,6 @@ const rotateHalf =
         color: tomato;
     }
 
-    pre {
-    }
-
     figure {
         display: flex;
         flex-direction: column;
@@ -1180,6 +2003,8 @@ const rotateHalf =
         order: 1;
         padding: 1ex;
         font-size: 1em;
+        background-color: #fffa;
+        z-index: 1000;
     }
     label {
         user-select: none;
