@@ -1612,13 +1612,13 @@ const rotateHalf =
         <figcaption>
             If the center of the <code style:background-color="teal">first</code
             >
-            and
-            <code style:background-color="tomato">second</code> are equal, the
-            second reflection counters the distortion caused by the first
-            reflection. The
+            circle and
+            <code style:background-color="tomato">second</code> circle are
+            equal, the second reflection counters the distortion caused by the
+            first reflection. The
             <code style:background-color="yellowgreen">final result</code> is the
-            linear scaling with the circles center as pivot and the ratio of their
-            radii as scaling factor.
+            linear scaling with the circles common center as pivot and with the ratio
+            of their radii as scaling factor.
         </figcaption>
         <svg
             class="canvas"
