@@ -6,13 +6,14 @@
 
     let colors = $state({
         subject: "royalblue",
-        first: "teal",
-        angle_a: "teal",
-        angle_b: "tomato",
-        second: "tomato",
-        projected: "rosybrown",
+        first: "tomato",
+        angle_a: "tomato",
+        angle_b: "teal",
+        second: "teal",
+        projected: "rebeccapurple",
+        projected2: "rebeccapurple",
         reflected: "orchid",
-        rotated: "yellowgreen",
+        rotated: "limegreen",
         angle: "#333",
         rotor: "#aaa",
     });
@@ -596,7 +597,16 @@
 {/snippet}
 
 {#snippet textLabel(long, short, type)}
-    <code class="color-label" style:--color={colors[type]}>{short}</code>
+    <code class="color-label" style:--color={colors[type]}> {short}</code>
+{/snippet}
+
+{#snippet colorPicker(long, short, type)}
+    <label class="color-label-picker" style:--color={colors[type]}>
+        <input class="minipicker" type="color" bind:value={colors[type]} />
+        <code class="color-label" style:--color={colors[type]}>
+            {long}</code
+        ></label
+    >
 {/snippet}
 
 <svelte:head>
@@ -679,23 +689,35 @@
             Show chiral figures
         </label>
     </fieldset>
+    <fieldset>
+        <legend>Customize Colors</legend>
+
+        <div class="picker-row">
+            {@render colorPicker("Subject", "s", "subject")}
+            {@render colorPicker("First Reflector", "u", "first")}
+            {@render colorPicker("Second Reflector", "v", "second")}
+            {@render colorPicker("Reflected", "q", "reflected")}
+            {@render colorPicker("Rotated", "t", "rotated")}
+            {@render colorPicker("Rotor", "r", "rotor")}
+        </div>
+    </fieldset>
 </header>
 
 <div class="grid">
     <figure class="grid-item">
         <figcaption>
-            The {@render textLabel("subject", "Subject s", "subject")} together with
-            the pair ({@render textLabel(
+            The {@render textLabel("subject", "Subject (s)", "subject")} together
+            with the pair ({@render textLabel(
                 "first reflector",
-                "First reflector u",
+                "First reflector (u)",
                 "first",
             )},
             {@render textLabel(
                 "second reflector",
-                "second reflector v",
+                "second reflector (v)",
                 "second",
             )}) of reflection vectors of the
-            {@render textLabel("rotor", "rotor r", "rotor")}.
+            {@render textLabel("rotor", "rotor (r)", "rotor")}.
         </figcaption>
         <svg
             class="canvas"
@@ -714,12 +736,12 @@
             {@render vec(rotor.from, colors.first)}
             {@render vec(rotor.to, colors.second)}
 
-            {@render label(subject, "Subject s", colors.subject)}
-            {@render label(rotor.from, "First Reflector u", colors.first)}
-            {@render label(rotor.to, "Second Reflector v", colors.second)}
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(rotor.from, "First Reflector (u)", colors.first)}
+            {@render label(rotor.to, "Second Reflector (v)", colors.second)}
 
-            {@render arc(rotor.from, rotor.to, "gray")}
-            {@render arclabel(rotor.from, rotor.to, "rotor r", "gray")}
+            {@render arc(rotor.from, rotor.to, colors.rotor)}
+            {@render arclabel(rotor.from, rotor.to, "rotor r", colors.rotor)}
 
             {@render arcctrl(rotor.from, rotor.to, "none")}
             {@render ctrl(subject, colors.subject)}
@@ -729,11 +751,14 @@
     </figure>
     <figure class="grid-item">
         <figcaption>
-            The {@render textLabel("subject", "Subject s", "subject")} is decomposed
+            The {@render textLabel("subject", "Subject (s)", "subject")} is decomposed
             into the component
             {@render textLabel("projected", "projected (p)", "projected")} onto
-            {@render textLabel("first reflector", "first reflector u", "first")} and
-            the
+            {@render textLabel(
+                "first reflector",
+                "first reflector (u)",
+                "first",
+            )} and the
             <code
                 style="text-decoration: underline; text-decoration-style: dashed; background-color: #888;"
                 >orthogonal component</code
@@ -751,7 +776,7 @@
                 {@render chiral(subject, colors.subject)}
                 {@render chiral(
                     reflected,
-                    "orchid",
+                    colors.reflected,
                     reflectionMatrix({ x: reflector.x, y: -reflector.y }),
                 )}
             {/if}
@@ -762,12 +787,12 @@
             {@render vec(subject, colors.subject)}
             {@render vec(reflector, colors.first)}
             {@render vec(reflected, colors.reflected)}
-            {@render vec(projected, "RosyBrown", "thick")}
+            {@render vec(projected, colors.projected, "thick")}
 
-            {@render label(subject, "Subject s", colors.subject)}
-            {@render label(reflector, "First Reflector u", colors.first)}
-            {@render label(projected, "Projected (p)", "RosyBrown")}
-            {@render label(reflected, "Reflected q", colors.reflected)}
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(reflector, "First Reflector (u)", colors.first)}
+            {@render label(projected, "Projected (p)", colors.projected)}
+            {@render label(reflected, "Reflected (q)", colors.reflected)}
 
             {@render ctrl(subject, colors.subject)}
             {@render ctrl(reflector, colors.first)}
@@ -777,18 +802,18 @@
         <figcaption>
             The {@render textLabel(
                 "first reflection",
-                "first reflection q",
+                "first reflection (q)",
                 "reflected",
             )}
             is then reflected again. This time it is
-            <code style="background-color: rebeccapurple;">Projected (o)</code>
+            {@render textLabel("projected", "projected (o)", "projected2")}
             onto the
             {@render textLabel(
                 "second reflector",
-                "second reflector v",
+                "second reflector (v)",
                 "second",
             )}. The result is the
-            <code style="background-color: yellowgreen;">Rotated</code> vector.
+            {@render textLabel("rotated", "rotated", "rotated")} vector.
         </figcaption>
         <svg
             class="canvas"
@@ -800,12 +825,12 @@
             {#if showChiral}
                 {@render chiral(
                     reflected,
-                    "orchid",
+                    colors.reflected,
                     reflectionMatrix({ x: reflector.x, y: -reflector.y }),
                 )}
                 {@render chiral(
                     rotated,
-                    "yellowgreen",
+                    colors.rotated,
                     `${reflectionMatrix({ x: rotor.to.x, y: -rotor.to.y })} ${reflectionMatrix({ x: rotor.from.x, y: -rotor.from.y })}`,
                 )}
             {/if}
@@ -817,15 +842,15 @@
             {@render vec(rotor.to, colors.second)}
             {@render vec(reflected, colors.reflected)}
             {@render vec(rotated, colors.rotated)}
-            {@render vec(projected2, "RebeccaPurple", "thick")}
+            {@render vec(projected2, colors.projected2, "thick")}
 
-            {@render arc(subject, rotated, "gray")}
+            {@render arc(subject, rotated, colors.rotor)}
 
-            {@render label(subject, "Subject s", colors.subject)}
-            {@render label(rotor.to, "Second Reflector v", colors.second)}
-            {@render label(projected2, "Projected (o)", "RebeccaPurple")}
-            {@render label(rotated, "Rotated t", colors.rotated)}
-            {@render label(reflected, "First Reflection q", colors.reflected)}
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(rotor.to, "Second Reflector (v)", colors.second)}
+            {@render label(projected2, "Projected (o)", colors.projected2)}
+            {@render label(rotated, "Rotated (t)", colors.rotated)}
+            {@render label(reflected, "First Reflection (q)", colors.reflected)}
 
             {@render arcctrl(subject, rotated, "none")}
             {@render ctrl(subject, colors.subject)}
@@ -838,7 +863,7 @@
                 Drawing the angles between the interim results shows that the
                 angle between {@render textLabel(
                     "subject",
-                    "Subject s",
+                    "Subject (s)",
                     "subject",
                 )} and
                 {@render textLabel("rotated", "Rotated t", "rotated")} is the sum
@@ -853,7 +878,7 @@
                 {@render textLabel("subject", "Subject s", "subject")}
                 and {@render textLabel(
                     "First reflector",
-                    "First reflector u",
+                    "First reflector (u)",
                     "first",
                 )}. The {@render textLabel(
                     "second angle",
@@ -862,7 +887,7 @@
                 )} is twice the angle between the
                 {@render textLabel(
                     "First reflection",
-                    "First reflection q",
+                    "First reflection (q)",
                     "reflected",
                 )}
                 and the
@@ -886,12 +911,12 @@
                 {@render chiral(subject, colors.subject)}
                 {@render chiral(
                     reflected,
-                    "orchid",
+                    colors.reflected,
                     reflectionMatrix({ x: reflector.x, y: -reflector.y }),
                 )}
                 {@render chiral(
                     rotated,
-                    "yellowgreen",
+                    colors.rotated,
                     `${reflectionMatrix({ x: rotor.to.x, y: -rotor.to.y })} ${reflectionMatrix({ x: rotor.from.x, y: -rotor.from.y })}`,
                 )}
             {/if}
@@ -913,12 +938,12 @@
                 {@render arc(reflected, subject, colors.angle_a)}
             {/if}
 
-            {@render label(rotor.to, "Second Reflector v", colors.second)}
-            {@render label(subject, "Subject s", colors.subject)}
-            {@render label(reflector, "First Reflector u", colors.first)}
-            {@render label(reflected, "First Reflection q", colors.reflected)}
+            {@render label(rotor.to, "Second Reflector (v)", colors.second)}
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(reflector, "First Reflector (u)", colors.first)}
+            {@render label(reflected, "First Reflection (q)", colors.reflected)}
 
-            {@render label(rotated, "Rotated t", colors.rotated)}
+            {@render label(rotated, "Rotated (t)", colors.rotated)}
 
             {@render ctrl(subject, colors.subject)}
             {@render ctrl(reflector, colors.first)}
@@ -981,25 +1006,32 @@ const rotateHalf =
             "Subject s",
             "subject",
         )} vector rotated in the <code>plane</code> spanned by the
-        {@render textLabel("first reflector", "first reflector u", "first")}
+        {@render textLabel("first reflector", "first reflector (u)", "first")}
         and
-        {@render textLabel("second reflector", "second reflector u", "second")}.
+        {@render textLabel(
+            "second reflector",
+            "second reflector (u)",
+            "second",
+        )}.
     </p>
     <p>
         The reflection at the
-        {@render textLabel("first reflector", "first reflector u", "first")}
-        mirrors the {@render textLabel("subject", "Subject s", "subject")} onto
+        {@render textLabel("first reflector", "first reflector (u)", "first")}
+        mirrors the {@render textLabel("subject", "Subject (s)", "subject")} onto
         {@render textLabel(
             "first reflection",
-            "first reflection q",
+            "first reflection (q)",
             "reflected",
         )}
         on the opposite side of the <code>plane</code>. The subsequent
         reflection at the
-        {@render textLabel("second reflector", "second reflector u", "second")} brings
-        the vector back to the original side of the plane. So the orientation between
-        the
-        {@render textLabel("subject", "Subject s", "subject")} and the
+        {@render textLabel(
+            "second reflector",
+            "second reflector (u)",
+            "second",
+        )} brings the vector back to the original side of the plane. So the orientation
+        between the
+        {@render textLabel("subject", "Subject (s)", "subject")} and the
         <code>rotation plane</code>
         is restored.
     </p>
@@ -1098,16 +1130,39 @@ const rotateHalf =
             Show chiral figures
         </label>
     </fieldset>
+    <fieldset>
+        <legend>Customize Colors</legend>
+
+        <div class="picker-row">
+            {@render colorPicker("Subject", "s", "subject")}
+            {@render colorPicker("First Circle", "u", "first")}
+            {@render colorPicker("Second Circle", "v", "second")}
+            {@render colorPicker("Reflected", "q", "reflected")}
+            {@render colorPicker("Rotated", "t", "rotated")}
+        </div>
+    </fieldset>
 </section>
 <div class="grid">
     <figure class="grid-item">
         <figcaption>
-            <code class="name-s">Subjects</code> outside the
-            <code style:background-color="teal">reflector circle</code> get
-            <code style:background-color="orchid">reflected</code>
-            to the inside.
-            <code class="name-s">Subjects</code> from the inside the circle get
-            <code style:background-color="orchid">reflected</code> to the outside.
+            A {@render textLabel("subject", "Subject (s)", "subject")} outside the
+            {@render textLabel(
+                "first reflector",
+                "reflector circle",
+                "first reflector",
+            )} gets
+            {@render textLabel("reflected", "reflected", "reflected")}
+            to the inside. A {@render textLabel(
+                "subject",
+                "Subject (s)",
+                "subject",
+            )} from the inside the {@render textLabel(
+                "first reflector",
+                "circle",
+                "first reflector",
+            )} get
+            {@render textLabel("reflected", "reflected (q)", "reflected")} to the
+            outside.
         </figcaption>
         <svg
             class="canvas"
@@ -1158,7 +1213,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="orchid"
+                            fill={colors.reflected}
                         />
                         >
                     {/each}
@@ -1168,7 +1223,7 @@ const rotateHalf =
             <circle
                 cx={circle.center.x * 100}
                 cy={-circle.center.y * 100}
-                stroke="teal"
+                stroke={colors.first}
                 fill="none"
                 r={circle.radius * 100}
             ></circle>
@@ -1176,7 +1231,7 @@ const rotateHalf =
             {@render line(
                 circleProjected,
                 circleReflected,
-                "teal",
+                colors.first,
                 "dashed thin",
             )}
             {@render line(
@@ -1192,22 +1247,22 @@ const rotateHalf =
             <circle
                 cx={circleReflected.x * 100}
                 cy={-circleReflected.y * 100}
-                fill="orchid"
+                fill={colors.reflected}
                 r="10"
             ></circle>
             <circle
                 cx={circleProjected.x * 100}
                 cy={-circleProjected.y * 100}
-                fill="teal"
+                fill={colors.first}
                 r="5"
             ></circle>
 
-            {@render label(subject, "Subject", colors.subject)}
-            {@render label(circleReflected, "Reflected", colors.reflected)}
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(circleReflected, "Reflected (q)", colors.reflected)}
             {@render label(
                 circle.center,
-                "Circular Reflector",
-                "teal",
+                "Circular Reflector (u)",
+                colors.first,
                 "",
                 circle.radius * 3,
                 false,
@@ -1219,11 +1274,13 @@ const rotateHalf =
     </figure>
     <figure class="grid-item">
         <figcaption>
-            A <code style:background-color="tomato">second circle</code> can be
-            used to on the result from the
-            <code style:background-color="orchid">first reflection</code>
-            to
-            <code style:background-color="yellowgreen">reflect</code>
+            A {@render textLabel("second circle", "second circle", "second")} can
+            be used to on the {@render textLabel(
+                "reflected",
+                "result",
+                "reflected",
+            )} from the first reflection to
+            {@render textLabel("rotated", "reflect", "rotated")}
             them again.
         </figcaption>
         <svg
@@ -1254,7 +1311,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="orchid"
+                            fill={colors.reflected}
                         />
                         >
                     {/each}
@@ -1282,7 +1339,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="yellowgreen"
+                            fill={colors.rotated}
                         />
                         >
                     {/each}
@@ -1294,7 +1351,7 @@ const rotateHalf =
                 cy={-circle.center.y * 100}
                 fill="none"
                 fill-opacity="0.1"
-                stroke="teal"
+                stroke={colors.first}
                 r={circle.radius * 100}
             ></circle>
             <circle
@@ -1302,7 +1359,7 @@ const rotateHalf =
                 cy={-circle2.center.y * 100}
                 fill="none"
                 fill-opacity="0.1"
-                stroke="tomato"
+                stroke={colors.second}
                 r={circle2.radius * 100}
             ></circle>
 
@@ -1310,51 +1367,43 @@ const rotateHalf =
             {@render line(
                 circleProjected2,
                 circleReflected2,
-                "tomato",
+                colors.first,
                 "dashed  thin",
             )}
             {@render line(
                 circleReflected,
                 circleProjected2,
-                "tomato",
+                colors.first,
                 "dashed  thin",
             )}
 
             {@render vec(subject, colors.subject)}
             {@render vec(circleReflected2, colors.rotated)}
 
-            <circle
-                cx={circleReflected.x * 100}
-                cy={-circleReflected.y * 100}
-                fill="orchid"
-                r="10"
-            ></circle>
-            <circle
-                cx={circleProjected2.x * 100}
-                cy={-circleProjected2.y * 100}
-                fill="tomato"
-                r="5"
-            ></circle>
             {@render label(
                 circle.center,
-                "Circular Reflector",
-                "teal",
+                "Circular Reflector (u)",
+                colors.first,
                 "",
                 circle.radius * 3,
                 false,
             )}
             {@render label(
                 circle2.center,
-                "Second Circular Reflector",
-                "tomato",
+                "Second Circular Reflector (v)",
+                colors.first,
                 "",
                 -circle2.radius * 3,
                 false,
             )}
 
-            {@render label(circleReflected, "Reflected", colors.reflected)}
-            {@render label(circleReflected2, "Reflected Twice", colors.rotated)}
-            {@render label(subject, "Subject", colors.subject)}
+            {@render label(circleReflected, "Reflected (q)", colors.reflected)}
+            {@render label(
+                circleReflected2,
+                "Reflected Twice (t)",
+                colors.rotated,
+            )}
+            {@render label(subject, "Subject s", colors.subject)}
             {@render ctrlRad(circle, colors.first)}
             {@render ctrlRad(circle2, colors.second)}
 
@@ -1365,15 +1414,17 @@ const rotateHalf =
     </figure>
     <figure class="grid-item">
         <figcaption>
-            If the center of the <code style:background-color="teal">first</code
-            >
-            circle and
-            <code style:background-color="tomato">second</code> circle are
-            equal, the second reflection counters the distortion caused by the
-            first reflection. The
-            <code style:background-color="yellowgreen">final result</code> is the
-            linear scaling with the circles common center as pivot and with the ratio
-            of their radii as scaling factor.
+            If the center of the {@render textLabel(
+                "first",
+                "first circle",
+                "first",
+            )} and
+            {@render textLabel("second", "second circle", "second")} are equal, the
+            second reflection counters the distortion caused by the first reflection.
+            The
+            {@render textLabel("rotated", "final result", "rotated")} is the linear
+            scaling with the circles common center as pivot and with the ratio of
+            their radii as scaling factor.
         </figcaption>
         <svg
             class="canvas"
@@ -1403,7 +1454,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="orchid"
+                            fill={colors.reflected}
                         />
                         >
                     {/each}
@@ -1451,7 +1502,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="yellowgreen"
+                            fill={colors.rotated}
                         />
                         >
                     {/each}
@@ -1463,7 +1514,7 @@ const rotateHalf =
                 cy={-circle.center.y * 100}
                 fill="none"
                 fill-opacity="0.1"
-                stroke="teal"
+                stroke={colors.first}
                 r={circle.radius * 100}
             ></circle>
             <circle
@@ -1471,7 +1522,7 @@ const rotateHalf =
                 cy={-circle3.center.y * 100}
                 fill="none"
                 fill-opacity="0.1"
-                stroke="tomato"
+                stroke={colors.second}
                 r={circle3.radius * 100}
             ></circle>
 
@@ -1489,14 +1540,16 @@ const rotateHalf =
     </figure>
     <figure class="grid-item">
         <figcaption>
-            If the common center both the <code style:background-color="teal"
-                >first</code
-            >
+            If the common center both the {@render textLabel(
+                "first",
+                "first circle",
+                "first",
+            )}
             and the
-            <code style:background-color="tomato">second</code> circle is really
+            {@render textLabel("second", "second circle", "second")} circle is really
             far away, the scaling around this far pivot will cause the
             {@render textLabel("subject", "Subject s", "subject")} to be
-            <code style:background-color="yellowgreen">translated</code>.
+            {@render textLabel("rotated", "translated", "rotated")}.
         </figcaption>
         <svg
             class="canvas"
@@ -1543,7 +1596,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="yellowgreen"
+                            fill={colors.rotated}
                         />
                         >
                     {/each}
@@ -1568,17 +1621,17 @@ const rotateHalf =
                 ></circle>
             </mask>
             {@render vec(translate(trans, subject), colors.rotated)}
-            {@render label(subject, "subject", colors.subject)}
-            {@render label(trans.center, "Far away center", colors.first)}
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(trans.center, "Far away centers (f)", colors.first)}
             {@render label(
                 translate(trans, subject),
-                "translated result",
-                "yellowgreen",
+                "translated result (t)",
+                colors.rotated,
             )}
 
             {@render vec(subject, colors.subject)}
             <g mask="url(#far-mask)">
-                {@render ctrlTransRads(trans, ["tomato", colors.first])}
+                {@render ctrlTransRads(trans, [colors.first, colors.second])}
             </g>
 
             {@render ctrl(subject, colors.subject)}
@@ -1779,5 +1832,33 @@ const rotateHalf =
 
     .color-label {
         background-color: var(--color, #111);
+    }
+    .color-label-picker {
+        display: inline-flex;
+        align-items: center;
+        gap: 1ex;
+        background-color: var(--color, #111);
+        font-family: monospace, monospace;
+        background-color: #eee;
+        padding: 2px 2px 2px 1ex;
+        border-radius: 4px;
+        background: #222;
+        color: #fff;
+    }
+    .minipicker {
+        width: 15px;
+        height: 15px;
+        border: 1px solid #fffa;
+        padding: 0;
+        box-sizing: border-box;
+        border-radius: 30px;
+    }
+    ::-moz-color-swatch {
+        border: none;
+    }
+    .picker-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5ex 1ex;
     }
 </style>
