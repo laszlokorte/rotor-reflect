@@ -1146,7 +1146,8 @@
         {@render textLabel("rotor", "r", "rotor")} below to change the direction of
         both reflectors at once.
     </p>
-
+</header>
+<div class="options">
     <fieldset>
         <legend>Options</legend>
         <label>
@@ -1166,7 +1167,7 @@
             {@render colorPicker("Rotor", "r", "rotor")}
         </div>
     </fieldset>
-</header>
+</div>
 
 <div class="grid">
     <figure class="grid-item">
@@ -1582,7 +1583,7 @@ const rotateHalf =
             "subject (s)",
             "subject",
         )}
-        <em>onto</em> the reflector vector itself. Now using {@render textLabel(
+        <em>onto</em> the reflector vector itself. Now using a {@render textLabel(
             "plane",
             "plane",
             "plane",
@@ -1708,7 +1709,9 @@ const planeProject = (subject, plane) =>
             "pivot",
         )} of the rotation. Try to drag the pivot around.
     </p>
+</section>
 
+<div class="options">
     <fieldset>
         <legend>Options</legend>
         <label>
@@ -1727,7 +1730,7 @@ const planeProject = (subject, plane) =>
             {@render colorPicker("Rotated", "t", "rotated")}
         </div>
     </fieldset>
-</section>
+</div>
 <div class="grid">
     <figure class="grid-item">
         <figcaption>
@@ -2316,7 +2319,8 @@ const planeProject = (subject, plane) =>
         straight plane. In this way Circle Inversion is a generalization of a
         reflection on a plane.
     </p>
-
+</section>
+<div class="options">
     <fieldset>
         <legend>Options</legend>
         <label>
@@ -2335,7 +2339,7 @@ const planeProject = (subject, plane) =>
             {@render colorPicker("Rotated", "t", "rotated")}
         </div>
     </fieldset>
-</section>
+</div>
 <div class="grid">
     <figure class="grid-item">
         <figcaption>
@@ -2900,6 +2904,10 @@ function circleReflect(subject, circle) {
     :global(body) {
         font-family: monospace, monospace;
     }
+    .options {
+        max-width: 120ch;
+        margin: auto;
+    }
     .grid {
         overflow: visible;
         background: #eee;
@@ -2937,6 +2945,7 @@ function circleReflect(subject, circle) {
         background: #222;
         color: #fff;
         border-radius: 2px;
+        white-space: nowrap;
     }
 
     .canvas {
