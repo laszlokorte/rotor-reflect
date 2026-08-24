@@ -610,6 +610,12 @@
 {/snippet}
 {#snippet ctrlTransRads(trans, defaultColors = [], cls = null)}
     {@const center = norm(trans.center)}
+    {@render line(
+        scale(trans.radiusB - 0.2, center),
+        scale(trans.radiusA - 0.2, center),
+        "black",
+        "dashed faded nodir",
+    )}
     {#each ["radiusA", "radiusB"] as rad, i}
         {@const v = add(center, { x: trans[rad], y: 0 })}
         <path
@@ -776,6 +782,18 @@
             normal: normalB,
             distance: planes.distanceB,
         },
+    )}
+    {@render line(
+        add(
+            scale(0.5, { x: -planes.normal.y, y: planes.normal.x }),
+            scale(planes.distanceA, planes.normal),
+        ),
+        add(
+            scale(0.5, { x: -planes.normal.y, y: planes.normal.x }),
+            scale(planes.distanceB, planes.normal),
+        ),
+        "black",
+        "dashed faded nodir",
     )}
     {#each ["distanceA", "distanceB"] as d, di}
         {@const normal = scale(
@@ -2177,8 +2195,15 @@ const planeReflect = (subject, plane) =>
     <figure class="grid-item">
         <figcaption>
             If the two reflectors are parallel the composed reflection is a
-            translation. The distance of the translation is <em>twice</em> the distance
-            between the reflectors.
+            translation. The total <span
+                style="text-decoration: underline; text-decoration-style: dotted;"
+                >distance of the translation</span
+            >
+            is <em>twice</em> the
+            <span
+                style="text-decoration: underline; text-decoration-style: dashed;"
+                >distance between the reflectors</span
+            >.
         </figcaption>
         <svg
             class="canvas"
@@ -2258,6 +2283,21 @@ const planeReflect = (subject, plane) =>
                 ),
                 "Reflected twice (t)",
                 colors.rotated,
+            )}
+            {@render line(
+                subject,
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceA,
+                    }),
+                    {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceB,
+                    },
+                ),
+                "black",
+                "dotted faded nodir",
             )}
             {@render ctrlPlanes(planesParallel, [colors.first, colors.second])}
 
@@ -2802,6 +2842,12 @@ const planeReflect = (subject, plane) =>
                     {/each}
                 </g>
             {/if}
+            {@render line(
+                subject,
+                translate(trans, subject),
+                "black",
+                "dashed faded",
+            )}
             <circle
                 cx="0"
                 cy="0"
@@ -3040,6 +3086,10 @@ function circleReflect(subject, circle) {
     }
     .dashed {
         stroke-dasharray: 4 5;
+        stroke-width: 2;
+    }
+    .dotted {
+        stroke-dasharray: 1 5;
         stroke-width: 2;
     }
     .thick {
