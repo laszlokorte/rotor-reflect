@@ -54,6 +54,15 @@
         distance: 0,
     });
 
+    let planesOrtho = $state({
+        normal: norm({
+            x: 3,
+            y: -2,
+        }),
+        distanceA: 0,
+        distanceB: 0,
+    });
+
     function planeIntersection(p1, p2) {
         const { x: nx1, y: ny1 } = p1.normal;
         const { x: nx2, y: ny2 } = p2.normal;
@@ -91,17 +100,19 @@
         radiusB: 2,
     });
 
-    function circleReflect(c, s) {
-        const v = subtract(s, c.center);
-        const d2 = dot(v, v);
+    function circleReflect(circle, subject) {
+        const direction = subtract(subject, circle.center);
+        const dist_ratio = len(direction) / circle.radius;
+        const dist_inv = 1 / dist_ratio;
 
-        return add(c.center, scale((c.radius * c.radius) / d2, v));
+        return add(circle.center, scale(dist_inv * dist_inv, direction));
     }
-    function circleProject(c, s) {
-        const v = subtract(s, c.center);
-        const d2 = len(v);
+    function circleProject(circle, subject) {
+        const direction = subtract(subject, circle.center);
+        const dist_ratio = len(direction) / circle.radius;
+        const dist_inv = 1 / dist_ratio;
 
-        return add(c.center, scale(c.radius / d2, v));
+        return add(circle.center, scale(dist_inv, direction));
     }
 
     function circleScale(circleA, circleB, v) {
@@ -205,16 +216,17 @@
         return isOnCCWArc(subject, rotated, reflected);
     }
 
-    function planeProject(subject, { normal: normal, distance: d }) {
-        const t = dot(subject, normal) - d;
-
-        return add(subject, scale(-1 * t, normal));
+    function planeReject(subject, { normal: normal, distance: d }) {
+        const dist = dot(subject, normal) - d;
+        return scale(dist, normal);
     }
 
-    function planeReflect(subject, { normal: normal, distance: d }) {
-        const t = dot(subject, normal) - d;
+    function planeProject(subject, plane) {
+        return subtract(subject, planeReject(subject, plane));
+    }
 
-        return add(subject, scale(-2 * t, normal));
+    function planeReflect(subject, plane) {
+        return add(subject, scale(-2, planeReject(subject, plane)));
     }
 
     let projected = $derived(
@@ -898,57 +910,66 @@
         Rotation via Double Reflection
     </h1>
     <p>
-        This is a demonstration how any rotation of a vector {@render textLabel(
-            "subject",
-            "s",
-            "subject",
-        )} can be achieved by two successive reflections.
+        This is a demonstration how any rotation can be composed of two
+        successive reflections.
     </p>
     <h2>Reflecting at a vector</h2>
     <p>
-        A reflection of vector {@render textLabel("subject", "s", "subject")} at vector
-        {@render textLabel("first reflector", "u", "first")} is achieved by first
-        projecting
+        The simplest way of a reflection is reflecting one vector at another
+        vector.
+    </p>
+    <p>
+        A reflection of {@render textLabel(
+            "subject",
+            "subject vector (s)",
+            "subject",
+        )} at a
+        {@render textLabel("first reflector", "reflector vector (u)", "first")} is
+        achieved by first projecting
         {@render textLabel("subject", "s", "subject")}
         onto {@render textLabel("first reflector", "u", "first")} and then adding
-        the difference betwen
+        the difference between
         {@render textLabel("subject", "s", "subject")} and the projection.
     </p>
     <p>
-        A reflection of vector {@render textLabel("subject", "s", "subject")} at vector
-        {@render textLabel("first reflector", "u", "first")}
-        followed by a reflection at vector {@render textLabel(
+        A reflection of vector {@render textLabel("subject", "s", "subject")} at a
+        {@render textLabel("first reflector", "first reflector (u)", "first")}
+        followed by a reflection at a {@render textLabel(
             "second reflector",
-            "v",
+            "second reflector (v)",
             "second",
         )} results in a rotation of {@render textLabel(
             "subject",
             "s",
             "subject",
-        )} in the plane spanned by vectors
+        )} in the plane spanned by the reflectors
         {@render textLabel("first reflector", "u", "first")}
         and
         {@render textLabel("second reflector", "v", "second")}.
     </p>
     <p>
-        The angle of the rotation is twice as large as the angle between vector {@render textLabel(
+        The angle of the rotation is twice as large as the angle between {@render textLabel(
             "first reflector",
             "u",
             "first",
         )}
-        and vector
+        and
         {@render textLabel("second reflector", "v", "second")}.
     </p>
     <p>
         In general to construct a rotation of angle
         {@render textLabel("angle", "α", "angle")}
-        you just need to construct two vectors that enclose an angle
-        {@render textLabel("half angle", "α/2", "angle")} and then use them as reflectors
-        for the subject vector.
+        you just need to construct two reflectors that enclose an angle
+        {@render textLabel("half angle", "α/2", "angle")} and apply the reflections
+        successively.
     </p>
 
     <p>
-        The pair of vector {@render textLabel("first reflector", "u", "first")} and
+        The pair of reflectors {@render textLabel(
+            "first reflector",
+            "u",
+            "first",
+        )} and
         {@render textLabel("second reflector", "v", "second")}
         is called a rotor.
     </p>
@@ -1239,6 +1260,18 @@
         or <code>cos</code> is needed to perform the rotations.
     </p>
     <p>
+        Somestimes you may need to use trigonometric functions like <code
+            >cos</code
+        >
+        or
+        <code>sin</code> to construct the reflectors themself in the first
+        place. But more often the <em>cause</em> of a rotation is already
+        avaialble as pair of vectors. In many interactive application, like this
+        one your are using right now, the input data are mouse coordintes
+        encoded as <code>(x, y)</code> tuple. Instead of turning the movement of the
+        mouse first into an angle, the rotor can be directly constructed.
+    </p>
+    <p>
         The construction of any transformation by only composing reflections
         sits at the core of <a href="https://bivector.net/" target="_blank"
             >Geometric Algebra</a
@@ -1279,7 +1312,7 @@ const rotateHalf =
 
 <section>
     <h2>3 Dimensions</h2>
-    <p>The same approch also works for 3 dimensions.</p>
+    <p>The same approach also works for 3 dimensions.</p>
     <p>
         Below you can see the {@render textLabel(
             "subject",
@@ -1318,7 +1351,7 @@ const rotateHalf =
     <p>
         During this zic-zac motion across the plane the vector still rotates <em
             >along</em
-        > the plane in the except same ways as in the 2d case above.
+        > the plane in the exact same way as in the 2-dimensional case before.
     </p>
 </section>
 
@@ -1330,39 +1363,41 @@ const rotateHalf =
 <section>
     <h2>Higher dimesions</h2>
     <p>
-        To make the same approach work in higher dimensions, we first need to
-        refine our understanding of what a reflection actually is.
+        You might now think that is works for any higher number of dimensions.
+        To actually make this work, we first need to refine our definition of
+        what a reflection actually is.
     </p>
     <p>
-        By reflection, we usually mean moving something to the opposite side of
-        a mirror while keeping it at the same distance from the mirror.
+        By reflection, we usually mean moving a subject to the opposite side of
+        a reflector while preserving the same distance between subject and
+        reflector.
     </p>
     <p>
-        In two dimensions, a vector can serve as a mirror: it defines a line
-        through the origin, and that line divides the space into two sides.
-        There is therefore an unambiguous other side.
+        In two dimensions, a vector can serve as a reflector: It defines a line
+        through the origin and that line divides the space into two sides. There
+        is therefore an unambiguous <em>opposite side</em>.
     </p>
     <p>
-        In three dimensions, however, a single vector does not define a mirror.
-        There are infinitely many planes that contain that vector, and therefore
-        no unique other side. Which side is opposite to a given point depends on
-        which of these planes we choose.
+        In three dimensions, however, a single vector does not define a
+        reflector in the same way. It does not devide the space into two side.
+        Which side is opposite to a given vector depends on the orientation we
+        look at it.
     </p>
     <p>
-        In three dimensions this ambiguity still disappears when we compose two
+        In three dimensions this ambiguity still disappears if we compose two
         reflections: The ambiguity does not affect the resulting rotation. This
-        is why the 3d example before did work out.
+        is why the 3d example before did still work out.
     </p>
     <p>
-        But if we want to define a single reflection itself in an arbitrary
-        number of dimensions, we need a geometric object that uniquely divides
-        the space into two sides. What we need is a plane - more precisely, a
-        hyperplane in higher dimensions.
+        But if we want to define a single reflector itself in an arbitrary
+        number of dimensions, we need another kind of geometric object that
+        uniquely divides the space into two sides. What we need is a plane -
+        more precisely, a hyperplane in higher dimensions.
     </p>
     <p>
-        A flat plane divides space into two regions. It therefore gives us a
-        well-defined notion of one side and the other side. This is exactly the
-        property we need for a reflection.
+        A flat plane always divides space into exactly two regions. It therefore
+        gives us a well-defined notion of <em>one side and the opposite side</em
+        >. This is exactly the property we need for a reflection.
     </p>
     <p>
         A simple way to define such a plane is by a normal vector and a
@@ -1372,23 +1407,30 @@ const rotateHalf =
     </p>
     <h2>Reflecting at a plane</h2>
     <p>
-        The plane is perpendicular to its normal direction, so its orientation
-        is offset by a quarter turn from the normal. Unlike a vector through the
-        origin, a plane can also be moved away from the origin by changing its
-        distance.
+        We will rebuild our construction from above but using planes instead of
+        vectors. This will lead us to a solution that works for constructing
+        rotations in any number of dimensions.
     </p>
     <p>
-        This gives us a reflector that works in any number of dimensions and,
-        importantly, gives us a unique and well-defined notion of which side of
-        the reflector a point lies on.
+        Notice that difference in orientation: Before we projected the {@render textLabel(
+            "subject",
+            "subject (s)",
+            "subject",
+        )}
+        <em>onto</em> the reflector vector itself. Now using {@render textLabel(
+            "plane",
+            "plane",
+            "plane",
+        )} as reflector the planes normal vector is perpendicular to the reflectors
+        surfaces.
     </p>
 </section>
 <div class="grid">
     <figure class="grid-item">
         <figcaption>
             The {@render textLabel("plane", "plane (p)", "plane")} is determined by
-            its normal vector and a distance from the origin. It devides the space
-            into inside and outside.
+            its normal vector and a <code>distance </code> from the origin. It devides
+            the space into inside and outside.
         </figcaption>
         <svg
             class="canvas"
@@ -1401,6 +1443,20 @@ const rotateHalf =
 
             {@render labelPlane(plane0, "plane (p)", colors.plane)}
             {@render label(plane0.normal, "Normal", colors.plane)}
+            <text
+                opacity="0.4"
+                x={plane0.normal.x * 300}
+                y={-plane0.normal.y * 300}
+            >
+                Outside
+            </text>
+            <text
+                opacity="0.4"
+                x={-plane0.normal.x * 300}
+                y={plane0.normal.y * 300}
+            >
+                Inside
+            </text>
 
             {@render ctrlPlane(plane0, colors.plane)}
         </svg>
@@ -1451,12 +1507,37 @@ const rotateHalf =
     </figure>
 </div>
 <section>
+    <h2>Implementation</h2>
+    <p>
+        The implementaion is similar simple as before. The <code>dot</code>
+        product between vector and normal is be used to determinate the perpendicular
+        distance between vector and plane. The normal scaled by this distance gives
+        the component of the vector thats perpendicular to the plane (<code
+            >reject</code
+        >). For the reflection the original vector is subtraced from twice the
+        perpendicular component. Subtracting only once projects the vector onto
+        the plane.
+    </p>
+    <pre>{`
+const planeReject = (subject, plane) => {
+  const dist = dot(subject, plane.normal) - plane.distance;
+  return scale(dist, plane.normal);
+}
+
+const planeReflect = (subject, plane) =>
+  add(subject, scale(-2, planeReject(subject, plane)))
+
+const planeProject = (subject, plane) =>
+  subtract(subject, planeReject(subject, plane))
+  `.trim()}</pre>
+</section>
+<section>
     <h2>Rotation with two planes</h2>
 
     <p>
-        We can now use two planes instead of two vectors to compose a rotation
-        from two reflections. It works almost the same as before, except that by
-        moving the planes away from the origin we can even move the {@render textLabel(
+        We can now use two planes as reflectors to compose a rotation from two
+        reflections. It works almost the same as before, except that by moving
+        the planes away from the origin we can even choose the {@render textLabel(
             "pivot",
             "pivot (p)",
             "pivot",
@@ -1799,32 +1880,60 @@ const rotateHalf =
     </figure>
 </div>
 <section>
-    <h2>Implementation</h2>
+    <h2>Point Reflections and Translations</h2>
     <p>
-        The implementaion is similar simple as before. The <code>dot</code> product
-        between vector and normal is be used to determinate the distance between vector
-        and plane. The normal scaled by this distance gives the component of the vector
-        thats perpendicular to the plane. For the reflection the original vector is
-        subtraced from twice the perpendicular component.
+        Notice what happens if the two reflectors are oriented either
+        perpendicular or parallel to each other.
     </p>
-    <pre>{`
-function planeProject(plane, subject) {
-  const distance = plane.distance - dot(subject, plane.normal)
-  const perpenticular = scale(distance, plane.normal)
+</section>
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+            {/if}
 
-  return add(subject, perpenticular);
-}
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
 
-function planeReflect(plane, subject) {
-    const projected = planeProject(plane, subject)
-    const reflected = subtract(scale(2, projected), subject)
-    return reflected
-}
-    `.trim()}</pre>
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+            {/if}
+
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+</div>
+<section>
     <h2>Circular Reflections</h2>
     <p>
         Instead of reflecting across a flat plane, we can also reflect with
-        respect to more complex objects. One interesting example is the circular
+        respect to curved objects. The most interesting example is the circular
         reflection. A circular reflection maps points inside the circle to the
         outside and points outside the circle to the inside, while preserving
         the direction from the circle's center to the reflected point. In other
@@ -1832,11 +1941,27 @@ function planeReflect(plane, subject) {
         the circle's center; only its distance from the center changes.
     </p>
     <p>
-        For a circle with radius (<math
+        In this way a circle can be though of as generalization of a plane
+        because it also devides the space into two sides: inside and outside.
+    </p>
+    <p>
+        For a circle with radius a (<math
             xmlns="http://www.w3.org/1998/Math/MathML"
         >
             <mi>R</mi>
-        </math>), a point at distance (<math
+        </math>) at center
+        <math xmlns="http://www.w3.org/1998/Math/MathML">
+            (
+            <msub>
+                <mn>c</mn>
+                <mi>x</mi>
+            </msub>,
+            <msub>
+                <mn>c</mn>
+                <mi>y</mi>
+            </msub>
+            )
+        </math>, a subject point at distance (<math
             xmlns="http://www.w3.org/1998/Math/MathML"
         >
             <mi>r</mi>
@@ -1853,10 +1978,11 @@ function planeReflect(plane, subject) {
     </p>
 
     <p>
-        The propper name for this is Circle Inversion. If you imagine the circle
-        with its center really far away but its radius also really large you can
-        think of it acting as straight line. In this way Circle Inversion is a
-        generalization of a reflection on a line.
+        The propper name for this kind of reflection is <em>Circle Inversion</em
+        >. If you imagine the circle with its center really far away and its
+        radius really large you can think of its circumference acting as
+        straight plane. In this way Circle Inversion is a generalization of a
+        reflection on a plane.
     </p>
 
     <fieldset>
@@ -2380,6 +2506,26 @@ function planeReflect(plane, subject) {
         </svg>
     </figure>
 </div>
+<section>
+    <h2>Implementation</h2>
+    <pre>{`
+function circleProject(subject, circle) {
+  const direction = subtract(subject, circle.center)
+  const dist_ratio = len(direction) / circle.radius
+  const dist_inv = 1 / dist_ratio
+
+  return add(circle.center, scale(dist_inv, direction))
+}
+
+function circleReflect(subject, circle) {
+    const direction = subtract(subject, circle.center)
+    const dist_ratio = len(direction) / circle.radius
+    const dist_inv = 1 / dist_ratio
+
+    return add(circle.center, scale(dist_inv * dist_inv, direction))
+}
+`.trim()}</pre>
+</section>
 
 <footer>
     <a href="//tools.laszlokorte.de" target="_blank">More educational tools</a>
