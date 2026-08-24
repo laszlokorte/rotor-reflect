@@ -56,12 +56,27 @@
 
     let planesOrtho = $state({
         normal: norm({
+            x: -1,
+            y: -2,
+        }),
+        distanceA: 0.5,
+        distanceB: 0.5,
+    });
+    let planesParallel = $state({
+        normal: norm({
             x: 3,
             y: -2,
         }),
-        distanceA: 0,
-        distanceB: 0,
+        distanceA: 1,
+        distanceB: 2,
     });
+
+    function transform(v, t) {
+        return {
+            x: v.x * t[0] + t[1] * v.y,
+            y: v.x * t[2] + t[3] * v.y,
+        };
+    }
 
     function planeIntersection(p1, p2) {
         const { x: nx1, y: ny1 } = p1.normal;
@@ -517,9 +532,10 @@
                         reflect({ x: 1, y: 0 }, evtToSvg(evt)),
                         evt.currentTarget._offset,
                     );
+                    const clamped = scale(Math.min(len(pos), 500), norm(pos));
 
-                    const d1 = dot(p1.normal, pos);
-                    const d2 = dot(p2.normal, pos);
+                    const d1 = dot(p1.normal, clamped);
+                    const d2 = dot(p2.normal, clamped);
                     if (d1 < 0) {
                         p1.normal.x *= -1;
                         p1.normal.y *= -1;
@@ -748,10 +764,159 @@
 
     {@render ctrl(plane.normal, defaultColor, "", 1)}
 {/snippet}
+{#snippet ctrlPlanes(planes, defaultColors = [], ts = [], cls = null)}
+    {@const normalA = transform(planes.normal, ts[0] ?? [1, 0, 0, 1])}
+    {@const normalB = transform(planes.normal, ts[1] ?? [1, 0, 0, 1])}
+    {@const int = planeIntersection(
+        {
+            normal: normalA,
+            distance: planes.distanceA,
+        },
+        {
+            normal: normalB,
+            distance: planes.distanceB,
+        },
+    )}
+    {#each ["distanceA", "distanceB"] as d, di}
+        {@const normal = scale(
+            1,
+            transform(norm(planes.normal), ts[di] ?? [1, 0, 0, 1]),
+        )}
+        <path
+            role="button"
+            tabindex="-1"
+            onkeypress={(evt) => {
+                evt.preventDefault();
+            }}
+            class={[cls, "touch-point"]}
+            cursor="move"
+            d="M{normal.x * (planes[d] * 100) + normal.y * 500}
+            {normal.y * -(planes[d] * 100) + normal.x * 500}
+
+            {normal.x * (planes[d] * 100) - normal.y * 500}
+            {normal.y * -(planes[d] * 100) - normal.x * 500}"
+            fill="none"
+            stroke={defaultColors[di] ?? "red"}
+            stroke-width="4"
+            stroke-opacity="0.3"
+            pointer-events="stroke"
+        />
+        <path
+            onpointerdown={(evt) => {
+                if (evt.isPrimary) {
+                    evt.preventDefault();
+                    evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                    evt.currentTarget._offset =
+                        dot(scale(1 / 100, pos), norm(normal)) - planes[d];
+                }
+            }}
+            onpointermove={(evt) => {
+                if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                    evt.preventDefault();
+                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+
+                    planes[d] = Math.min(
+                        5,
+                        Math.max(
+                            -0,
+                            dot(norm(normal), scale(1 / 100, pos)) -
+                                evt.currentTarget._offset,
+                        ),
+                    );
+                }
+            }}
+            role="button"
+            tabindex="-1"
+            onkeypress={(evt) => {
+                evt.preventDefault();
+            }}
+            class={[cls, "touch-point"]}
+            cursor="move"
+            d="M
+        {normal.x * (planes[d] * 100 + 20 * (Math.sign(planes[d]) || 1)) +
+                normal.y * 500}
+        {normal.y * -(planes[d] * 100 + 20 * (Math.sign(planes[d]) || 1)) +
+                normal.x * 500}
+        {normal.x * (planes[d] * 100 + 20 * (Math.sign(planes[d]) || 1)) -
+                normal.y * 500}
+        {normal.y * -(planes[d] * 100 + 20 * (Math.sign(planes[d]) || 1)) -
+                normal.x * 500}"
+            fill="none"
+            stroke={defaultColors[di] ?? "red"}
+            stroke-width="40"
+            stroke-opacity="0.1"
+            pointer-events="stroke"
+        />
+    {/each}
+    {#if int}
+        <circle
+            cx={int.x * 100}
+            cy={-int.y * 100}
+            r="5"
+            stroke="black"
+            fill="white"
+            stroke-width="4"
+        ></circle>
+        <circle
+            r="20"
+            fill="black"
+            opacity="0.2"
+            cx={int.x * 100}
+            cy={-int.y * 100}
+            pointer-events="all"
+            onpointerdown={(evt) => {
+                if (evt.isPrimary) {
+                    evt.preventDefault();
+                    evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                    evt.currentTarget._offset = subtract(pos, scale(100, int));
+                }
+            }}
+            onpointermove={(evt) => {
+                if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                    evt.preventDefault();
+                    const pos = subtract(
+                        reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                        evt.currentTarget._offset,
+                    );
+                    const clamped = scale(Math.min(len(pos), 500), norm(pos));
+
+                    let d1 = dot(normalA, clamped);
+                    let d2 = dot(normalB, clamped);
+
+                    if (d1 < 0) {
+                        planes.normal.x *= -1;
+                        planes.normal.y *= -1;
+                        d1 *= -1;
+                        d2 *= -1;
+                    }
+
+                    planes.distanceA = d1 / 100;
+                    planes.distanceB = d2 / 100;
+                }
+            }}
+            role="button"
+            tabindex="-1"
+            onkeypress={(evt) => {
+                evt.preventDefault();
+            }}
+        ></circle>
+    {/if}
+
+    {@render ctrl(planes.normal, defaultColors[0], "", 1)}
+    {@render vec(normalA, defaultColors[0] ?? "red")}
+    {#if ts[0]}
+        {@render vec(
+            scale(Math.sign(planes.distanceB), normalB),
+            defaultColors[1] ?? "red",
+        )}
+    {/if}
+{/snippet}
 {#snippet pln(plane, defaultColor, cls = null)}
     {@const normal = norm(plane.normal)}
-    {@const off = scale(plane.distance, normal)}
-    {@const v = add(normal, { x: plane.distance, y: 0 })}
     <path
         role="button"
         tabindex="-1"
@@ -1601,7 +1766,7 @@ const planeProject = (subject, plane) =>
 
             {@render ctrlPlane(plane, colors.first)}
             {@render ctrlPlane(plane2, colors.second)}
-            {#if planeInter && len(planeInter) < 6}
+            {#if planeInter && len(planeInter) <= 6}
                 <circle
                     cx={planeInter.x * 100}
                     cy={-planeInter.y * 100}
@@ -1854,7 +2019,7 @@ const planeProject = (subject, plane) =>
             )}
             {@render label(planeRotated, "Rotated (t)", colors.rotated)}
 
-            {#if planeInter && len(planeInter) < 6}
+            {#if planeInter && len(planeInter) <= 6}
                 <circle
                     cx={planeInter.x * 100}
                     cy={-planeInter.y * 100}
@@ -1888,7 +2053,11 @@ const planeProject = (subject, plane) =>
 </section>
 <div class="grid">
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            If the two reflectors are orthogonal the composed reflection is a
+            point reflection. With the angle between the reflectors being 90°
+            this corresponds two a 180° rotation.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -1897,18 +2066,116 @@ const planeProject = (subject, plane) =>
             preserveAspectRatio="xMidYMid meet"
         >
             {#if showChiral}
+                {@const refl = planeReflect(subject, {
+                    normal: planesOrtho.normal,
+                    distance: planesOrtho.distanceA,
+                })}
                 {@render chiral(subject, colors.subject)}
+                {@render chiral(
+                    refl,
+                    colors.reflected,
+                    `${reflectionPlaneMatrix({
+                        normal: planesOrtho.normal,
+                        distance: planesOrtho.distanceA,
+                    })}`,
+                )}
+                {@render chiral(
+                    planeReflect(
+                        planeReflect(subject, {
+                            normal: planesOrtho.normal,
+                            distance: planesOrtho.distanceA,
+                        }),
+                        {
+                            normal: {
+                                x: -planesOrtho.normal.y,
+                                y: planesOrtho.normal.x,
+                            },
+                            distance: planesOrtho.distanceB,
+                        },
+                    ),
+                    colors.rotated,
+                    `${reflectionPlaneMatrix({
+                        normal: {
+                            x: -planesOrtho.normal.y,
+                            y: planesOrtho.normal.x,
+                        },
+                        distance: planesOrtho.distanceB,
+                    })} ${reflectionPlaneMatrix({
+                        normal: planesOrtho.normal,
+                        distance: planesOrtho.distanceA,
+                    })}`,
+                )}
             {/if}
 
             {@render axis()}
             {@render vec(subject, colors.subject)}
+            {@render vec(
+                planeReflect(subject, {
+                    normal: planesOrtho.normal,
+                    distance: planesOrtho.distanceA,
+                }),
+                colors.reflected,
+            )}
+            {@render vec(
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesOrtho.normal,
+                        distance: planesOrtho.distanceA,
+                    }),
+                    {
+                        normal: {
+                            x: -planesOrtho.normal.y,
+                            y: planesOrtho.normal.x,
+                        },
+                        distance: planesOrtho.distanceB,
+                    },
+                ),
+                colors.rotated,
+            )}
 
             {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(
+                planeReflect(subject, {
+                    normal: planesOrtho.normal,
+                    distance: planesOrtho.distanceA,
+                }),
+                "First reflection (q)",
+                colors.reflected,
+            )}
+            {@render label(
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesOrtho.normal,
+                        distance: planesOrtho.distanceA,
+                    }),
+                    {
+                        normal: {
+                            x: -planesOrtho.normal.y,
+                            y: planesOrtho.normal.x,
+                        },
+                        distance: planesOrtho.distanceB,
+                    },
+                ),
+                "Reflected twice (t)",
+                colors.rotated,
+            )}
+            {@render ctrlPlanes(
+                planesOrtho,
+                [colors.first, colors.second],
+                [
+                    [1, 0, 0, 1],
+                    [0, -1, 1, 0],
+                ],
+            )}
             {@render ctrl(subject, colors.subject)}
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            If the two reflectors are parallel the composed reflection is a
+            translation. The distance of the translation is <em>twice</em> the distance
+            between the reflectors.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -1918,12 +2185,77 @@ const planeProject = (subject, plane) =>
         >
             {#if showChiral}
                 {@render chiral(subject, colors.subject)}
+                {@render chiral(
+                    planeReflect(subject, {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceA,
+                    }),
+                    colors.reflected,
+                    `${reflectionPlaneMatrix({
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceA,
+                    })}`,
+                )}
+                {@render chiral(
+                    add(
+                        subject,
+                        scale(
+                            -planesParallel.distanceA * 2 +
+                                2 * planesParallel.distanceB,
+                            planesParallel.normal,
+                        ),
+                    ),
+                    colors.rotated,
+                )}
             {/if}
 
             {@render axis()}
             {@render vec(subject, colors.subject)}
+            {@render vec(
+                planeReflect(subject, {
+                    normal: planesParallel.normal,
+                    distance: planesParallel.distanceA,
+                }),
+                colors.reflected,
+            )}
+            {@render vec(
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceA,
+                    }),
+                    {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceB,
+                    },
+                ),
+                colors.rotated,
+            )}
 
             {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(
+                planeReflect(subject, {
+                    normal: planesParallel.normal,
+                    distance: planesParallel.distanceA,
+                }),
+                "First reflection (q)",
+                colors.reflected,
+            )}
+            {@render label(
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceA,
+                    }),
+                    {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceB,
+                    },
+                ),
+                "Reflected twice (t)",
+                colors.rotated,
+            )}
+            {@render ctrlPlanes(planesParallel, [colors.first, colors.second])}
 
             {@render ctrl(subject, colors.subject)}
         </svg>
