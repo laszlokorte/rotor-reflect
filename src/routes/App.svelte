@@ -1,4 +1,5 @@
 <script>
+    import { textureLoad } from "three/src/nodes/TSL.js";
     import Scene from "./Scene.svelte";
     import fGrid from "./f_grid";
 
@@ -16,6 +17,9 @@
         rotated: "limegreen",
         angle: "#333",
         rotor: "#aaa",
+        plane: "purple",
+        single: "darkorange",
+        pivot: "black",
     });
 
     let reflector = $state({
@@ -27,6 +31,46 @@
         x: 2,
         y: 3,
     });
+    let plane0 = $state({
+        normal: norm({
+            x: 2,
+            y: -3,
+        }),
+        distance: 0,
+    });
+    let plane = $state({
+        normal: norm({
+            x: 2,
+            y: -3,
+        }),
+        distance: 0,
+    });
+
+    let plane2 = $state({
+        normal: norm({
+            x: 3,
+            y: -2,
+        }),
+        distance: 0,
+    });
+
+    function planeIntersection(p1, p2) {
+        const { x: nx1, y: ny1 } = p1.normal;
+        const { x: nx2, y: ny2 } = p2.normal;
+
+        const det = nx1 * ny2 - ny1 * nx2;
+
+        if (Math.abs(det) < 1e-10) {
+            return null; // parallel (or coincident)
+        }
+
+        return {
+            x: (p1.distance * ny2 - ny1 * p2.distance) / det,
+            y: (nx1 * p2.distance - p1.distance * nx2) / det,
+        };
+    }
+
+    let planeInter = $derived(planeIntersection(plane, plane2));
 
     let circle = $state({
         center: { x: -2.5, y: -2.5 },
@@ -42,7 +86,7 @@
     });
 
     let trans = $state({
-        center: scale(5, norm({ x: 3, y: -1 })),
+        center: norm({ x: 3, y: -1 }),
         radiusA: 4,
         radiusB: 2,
     });
@@ -160,6 +204,19 @@
     function arcDirection(subject, reflected, rotated) {
         return isOnCCWArc(subject, rotated, reflected);
     }
+
+    function planeProject(subject, { normal: normal, distance: d }) {
+        const t = dot(subject, normal) - d;
+
+        return add(subject, scale(-1 * t, normal));
+    }
+
+    function planeReflect(subject, { normal: normal, distance: d }) {
+        const t = dot(subject, normal) - d;
+
+        return add(subject, scale(-2 * t, normal));
+    }
+
     let projected = $derived(
         scale(dot(subject, reflector) / len2(reflector), reflector),
     );
@@ -170,6 +227,12 @@
     );
     let rotated = $derived(subtract(scale(2, projected2), reflected));
 
+    let plane0Projected = $derived(planeProject(subject, plane0));
+    let plane0Reflected = $derived(planeReflect(subject, plane0));
+    let planeReflected = $derived(planeReflect(subject, plane));
+    let planeProjected = $derived(planeProject(subject, plane));
+    let planeProjected2 = $derived(planeProject(planeReflected, plane2));
+    let planeRotated = $derived(planeReflect(planeReflected, plane2));
     const evtToSvg = (evt) => {
         const svg = evt.currentTarget.ownerSVGElement;
         const svgPoint = svg.createSVGPoint();
@@ -195,6 +258,19 @@
         const e = (yy - xx) / d;
 
         return `matrix(${a} ${b} ${c} ${e} 0 0)`;
+    };
+    const reflectionPlaneMatrix = (plane) => {
+        const { x: nx, y: ny } = plane.normal;
+        const d = plane.distance * 10;
+
+        return `matrix(
+          ${1 - 2 * nx * nx},
+          ${-2 * nx * -ny},
+          ${-2 * nx * -ny},
+          ${1 - 2 * -ny * -ny},
+          ${2 * d * nx},
+          ${2 * d * -ny}
+        )`;
     };
 
     const gridSize = 8;
@@ -269,9 +345,11 @@
     autoalign = true,
 )}
     <text
-        text-anchor={["start", "middle", "end"][
-            1 - Math.sign(v.x) * (autoalign ? 1 : 0)
-        ]}
+        text-anchor={typeof autoalign === "string"
+            ? autoalign
+            : ["start", "middle", "end"][
+                  1 - Math.sign(v.x) * (autoalign ? 1 : 0)
+              ]}
         transform="translate(0 {-30 * Math.sign(v.y) * autofit})"
         class={[cls, "label"]}
         x={v.x * 100}
@@ -284,9 +362,11 @@
         {t}
     </text>
     <text
-        text-anchor={["start", "middle", "end"][
-            1 - Math.sign(v.x) * (autoalign ? 1 : 0)
-        ]}
+        text-anchor={typeof autoalign === "string"
+            ? autoalign
+            : ["start", "middle", "end"][
+                  1 - Math.sign(v.x) * (autoalign ? 1 : 0)
+              ]}
         transform="translate(0 {-30 * Math.sign(v.y) * autofit})"
         class={[cls, "label"]}
         x={v.x * 100}
@@ -345,7 +425,10 @@
                 evt.currentTarget.setPointerCapture(evt.pointerId);
 
                 const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
-                evt.currentTarget._offset = subtract(pos, scale(100, v));
+                evt.currentTarget._offset = subtract(
+                    pos,
+                    scale(100 * (s == false ? 1 : s), v),
+                );
             }
         }}
         onpointermove={(evt) => {
@@ -357,7 +440,7 @@
                 );
 
                 const clamped = scale(
-                    s ? s : Math.min(500, len(pos)),
+                    s ? 100 * Math.sign(s) : Math.min(500, len(pos)),
                     norm(pos),
                 );
 
@@ -373,8 +456,8 @@
         class={[cls, "touch-point"]}
         cursor="move"
         r="40"
-        cx={v.x * 100}
-        cy={v.y * -100}
+        cx={v.x * 100 * (s !== false ? s : 1)}
+        cy={v.y * -100 * (s !== false ? s : 1)}
         fill="none"
     />
     <circle
@@ -382,16 +465,16 @@
         class={[cls]}
         r="20"
         opacity="0.3"
-        cx={v.x * 100}
-        cy={v.y * -100}
+        cx={v.x * 100 * (s !== false ? s : 1)}
+        cy={v.y * -100 * (s !== false ? s : 1)}
         fill={defaultColor ?? v.color ?? "red"}
     /><circle
         pointer-events="none"
         stroke="white"
         class={[cls]}
         r="10"
-        cx={v.x * 100}
-        cy={v.y * -100}
+        cx={v.x * 100 * (s !== false ? s : 1)}
+        cy={v.y * -100 * (s !== false ? s : 1)}
         fill={defaultColor ?? v.color ?? "red"}
     />
 {/snippet}
@@ -447,7 +530,7 @@
     />
 {/snippet}
 {#snippet ctrlTransRads(trans, defaultColors = [], cls = null)}
-    {@const center = trans.center}
+    {@const center = norm(trans.center)}
     {#each ["radiusA", "radiusB"] as rad, i}
         {@const v = add(center, { x: trans[rad], y: 0 })}
         <path
@@ -458,13 +541,13 @@
             }}
             class={[cls, "touch-point"]}
             cursor="move"
-            d="M{center.x * (trans[rad] * 20 + 4) + center.y * 100}
-            {center.y * -(trans[rad] * 20 + 4) + center.x * 100}
+            d="M{center.x * (trans[rad] * 100 + 20) + center.y * 500}
+            {center.y * -(trans[rad] * 100 + 20) + center.x * 500}
             Q
-            {center.x * (trans[rad] * 20 - 15)}
-            {center.y * -(trans[rad] * 20 - 15)}
-            {center.x * (trans[rad] * 20 + 4) - center.y * 100}
-            {center.y * -(trans[rad] * 20 + 4) - center.x * 100}"
+            {center.x * (trans[rad] * 100 - 80 + 20)}
+            {center.y * -(trans[rad] * 100 - 80 + 20)}
+            {center.x * (trans[rad] * 100 + 20) - center.y * 500}
+            {center.y * -(trans[rad] * 100 + 20) - center.x * 500}"
             fill="none"
             stroke={defaultColors[i] ?? v.color ?? "red"}
             stroke-width="4"
@@ -505,13 +588,13 @@
             stroke-linecap="round"
             class={[cls, "touch-point"]}
             cursor="move"
-            d="M{center.x * (trans[rad] * 20) + center.y * 100}
-                     {center.y * -(trans[rad] * 20) + center.x * 100}
+            d="M{center.x * (trans[rad] * 100) + center.y * 500}
+                     {center.y * -(trans[rad] * 100) + center.x * 500}
                      Q
-                     {center.x * (trans[rad] * 20 - 19)}
-                     {center.y * -(trans[rad] * 20 - 19)}
-                     {center.x * (trans[rad] * 20) - center.y * 100}
-                     {center.y * -(trans[rad] * 20) - center.x * 100}"
+                     {center.x * (trans[rad] * 100 - 80)}
+                     {center.y * -(trans[rad] * 100 - 80)}
+                     {center.x * (trans[rad] * 100) - center.y * 500}
+                     {center.y * -(trans[rad] * 100) - center.x * 500}"
             fill="none"
             stroke={defaultColors[i] ?? v.color ?? "red"}
             stroke-width="40"
@@ -519,6 +602,151 @@
             pointer-events="stroke"
         />
     {/each}
+{/snippet}
+{#snippet ctrlPlane(plane, defaultColor, cls = null)}
+    {@const normal = norm(plane.normal)}
+    {@const off = scale(plane.distance, normal)}
+    {@const v = add(normal, { x: plane.distance, y: 0 })}
+    <path
+        role="button"
+        tabindex="-1"
+        onkeypress={(evt) => {
+            evt.preventDefault();
+        }}
+        class={[cls, "touch-point"]}
+        cursor="move"
+        d="M{normal.x * (plane.distance * 100) + normal.y * 500}
+            {normal.y * -(plane.distance * 100) + normal.x * 500}
+
+            {normal.x * (plane.distance * 100) - normal.y * 500}
+            {normal.y * -(plane.distance * 100) - normal.x * 500}"
+        fill="none"
+        stroke={defaultColor ?? "red"}
+        stroke-width="4"
+        stroke-opacity="0.3"
+        pointer-events="stroke"
+    />
+    {@render vec(plane.normal, defaultColor)}
+    <line
+        stroke-linecap="round"
+        opacity="0.5"
+        x1={0}
+        y1={0}
+        x2={off.x * 100}
+        y2={-off.y * 100}
+        stroke-width="5"
+        stroke-dasharray=" 10 10 5 10"
+        stroke={defaultColor}
+    />
+    <path
+        onpointerdown={(evt) => {
+            if (evt.isPrimary) {
+                evt.preventDefault();
+                evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                evt.currentTarget._offset =
+                    dot(scale(1 / 100, pos), norm(normal)) - plane.distance;
+            }
+        }}
+        onpointermove={(evt) => {
+            if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                evt.preventDefault();
+                const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+
+                plane.distance = Math.min(
+                    5,
+                    Math.max(
+                        -0,
+                        dot(norm(normal), scale(1 / 100, pos)) -
+                            evt.currentTarget._offset,
+                    ),
+                );
+            }
+        }}
+        role="button"
+        tabindex="-1"
+        onkeypress={(evt) => {
+            evt.preventDefault();
+        }}
+        class={[cls, "touch-point"]}
+        cursor="move"
+        d="M
+        {normal.x * (plane.distance * 100 + 20) + normal.y * 500}
+        {normal.y * -(plane.distance * 100 + 20) + normal.x * 500}
+        {normal.x * (plane.distance * 100 + 20) - normal.y * 500}
+        {normal.y * -(plane.distance * 100 + 20) - normal.x * 500}"
+        fill="none"
+        stroke={defaultColor ?? "red"}
+        stroke-width="40"
+        stroke-opacity="0.1"
+        pointer-events="stroke"
+    />
+
+    {@render ctrl(plane.normal, defaultColor, "", 1)}
+{/snippet}
+{#snippet pln(plane, defaultColor, cls = null)}
+    {@const normal = norm(plane.normal)}
+    {@const off = scale(plane.distance, normal)}
+    {@const v = add(normal, { x: plane.distance, y: 0 })}
+    <path
+        role="button"
+        tabindex="-1"
+        onkeypress={(evt) => {
+            evt.preventDefault();
+        }}
+        class={[cls, "touch-point"]}
+        cursor="move"
+        d="M{normal.x * (plane.distance * 100) + normal.y * 500}
+            {normal.y * -(plane.distance * 100) + normal.x * 500}
+
+            {normal.x * (plane.distance * 100) - normal.y * 500}
+            {normal.y * -(plane.distance * 100) - normal.x * 500}"
+        fill="none"
+        stroke={defaultColor ?? "red"}
+        stroke-width="4"
+        stroke-opacity="0.8"
+        pointer-events="stroke"
+    />
+{/snippet}
+
+{#snippet labelPlane(
+    plane,
+    t,
+    defaultColor,
+    cls,
+    autofit = 1,
+    autoalign = true,
+)}
+    {@const normal = norm(plane.normal)}
+    {@const off = scale(plane.distance, normal)}
+    {@const v = add(normal, { x: plane.distance, y: 0 })}
+    <text
+        x={normal.x * (plane.distance * 100) - normal.y * 400}
+        y={normal.y * -(plane.distance * 100) - normal.x * 400}
+        text-anchor={["start", "middle", "end"][
+            1 - Math.sign(v.x) * (autoalign ? 1 : 0)
+        ]}
+        transform="translate(0 {-30 * Math.sign(v.y) * autofit})"
+        class={[cls, "label"]}
+        fill={"white"}
+        stroke={defaultColor ?? v.color ?? "red"}
+        stroke-opacity="0.2"
+        stroke-width="6"
+        pointer-events="stroke">{t}</text
+    >
+    <text
+        text-anchor={["start", "middle", "end"][
+            1 - Math.sign(v.x) * (autoalign ? 1 : 0)
+        ]}
+        transform="translate(0 {-30 * Math.sign(v.y) * autofit})"
+        class={[cls, "label"]}
+        x={normal.x * (plane.distance * 100) - normal.y * 400}
+        y={normal.y * -(plane.distance * 100) - normal.x * 400}
+        fill={defaultColor ?? v.color ?? "red"}
+    >
+        {t}
+    </text>
 {/snippet}
 
 {#snippet arcctrl(u, v, defaultColor = null, cls = null)}
@@ -966,6 +1194,7 @@
         >.
     </p>
 </section>
+
 <pre>{`
 // dot ~ similarity in direction
 const dot = (a, b) => a.x * b.x + a.y * b.y
@@ -1050,41 +1279,426 @@ const rotateHalf =
 <section>
     <h2>Higher dimesions</h2>
     <p>
-        To make the same approach work for higher dimensions we have to refine
-        our understanding of what actually happens during a reflection.
+        To make the same approach work in higher dimensions, we first need to
+        refine our understanding of what a reflection actually is.
     </p>
     <p>
-        By reflection we usually mean that something something is on the
-        opposite side of something else (the mirror) but at the same distance.
+        By reflection, we usually mean moving something to the opposite side of
+        a mirror while keeping it at the same distance from the mirror.
     </p>
     <p>
-        In 2d, there is only one possibility for something to be <em
-            >on the other side</em
-        >
-        of a vector. In 3d, for a single vector, the <em>other side</em> depends on
-        the original position of the subject. But as long as we combine two reflections
-        in a row, we do not need to care too much because this ambiguity cancels out.
+        In two dimensions, a vector can serve as a mirror: it defines a line
+        through the origin, and that line divides the space into two sides.
+        There is therefore an unambiguous other side.
     </p>
     <p>
-        But to work reflections across any number of dimensions we need
-        something to always determine <em>the other side</em> precisely and
-        uniquely. What we are looking for is a <em>plane</em>.
+        In three dimensions, however, a single vector does not define a mirror.
+        There are infinitely many planes that contain that vector, and therefore
+        no unique other side. Which side is opposite to a given point depends on
+        which of these planes we choose.
     </p>
-</section>
-<section>
+    <p>
+        In three dimensions this ambiguity still disappears when we compose two
+        reflections: The ambiguity does not affect the resulting rotation. This
+        is why the 3d example before did work out.
+    </p>
+    <p>
+        But if we want to define a single reflection itself in an arbitrary
+        number of dimensions, we need a geometric object that uniquely divides
+        the space into two sides. What we need is a plane - more precisely, a
+        hyperplane in higher dimensions.
+    </p>
+    <p>
+        A flat plane divides space into two regions. It therefore gives us a
+        well-defined notion of one side and the other side. This is exactly the
+        property we need for a reflection.
+    </p>
+    <p>
+        A simple way to define such a plane is by a normal vector and a
+        distance. The normal vector determines the direction perpendicular to
+        the plane, while the distance determines how far the plane is from the
+        origin along that direction.
+    </p>
     <h2>Reflecting at a plane</h2>
     <p>
-        A flat plane cuts the space into two regions: The part on the one side
-        of the plane (outside) and the other part of the plane (inside).
+        The plane is perpendicular to its normal direction, so its orientation
+        is offset by a quarter turn from the normal. Unlike a vector through the
+        origin, a plane can also be moved away from the origin by changing its
+        distance.
     </p>
     <p>
-        A simple way to define a flat plane is by its normal vector and a
-        distance. The normal vector points to the outside. The distance
-        determines how far from the origin along the normal direction something
-        needs to be to actually be counted to the outside.
+        This gives us a reflector that works in any number of dimensions and,
+        importantly, gives us a unique and well-defined notion of which side of
+        the reflector a point lies on.
     </p>
 </section>
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption>
+            The {@render textLabel("plane", "plane (p)", "plane")} is determined by
+            its normal vector and a distance from the origin. It devides the space
+            into inside and outside.
+        </figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            {@render labelPlane(plane0, "plane (p)", colors.plane)}
+            {@render label(plane0.normal, "Normal", colors.plane)}
+
+            {@render ctrlPlane(plane0, colors.plane)}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            A {@render textLabel("subject", "subject (s)", "subject")} can be at the
+            plane {@render textLabel("plane", "plane (p)", "plane")} by taking the
+            component that points into the planes normal direction and adding it twice
+            to the subject by taking the component that points into the planes normal
+            direction and adding it twice to the subject.
+        </figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            {@render labelPlane(plane0, "Plane (p)", colors.plane)}
+
+            {@render vec(subject, colors.subject)}
+            {@render vec(plane0Reflected, colors.single)}
+            {@render line(
+                subject,
+                plane0Projected,
+                colors.plane,
+                "dashed faded",
+            )}
+            {@render line(
+                plane0Projected,
+                plane0Reflected,
+                colors.plane,
+                "dashed faded",
+            )}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(plane0Reflected, "Reflected (r)", colors.single)}
+
+            {@render ctrlPlane(plane0, colors.plane)}
+
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+</div>
 <section>
+    <h2>Rotation with two planes</h2>
+
+    <p>
+        We can now use two planes instead of two vectors to compose a rotation
+        from two reflections. It works almost the same as before, except that by
+        moving the planes away from the origin we can even move the pivot of the
+        rotation.
+    </p>
+
+    <fieldset>
+        <legend>Options</legend>
+        <label>
+            <input type="checkbox" bind:checked={showChiral} />
+            Show chiral figures
+        </label>
+    </fieldset>
+    <fieldset>
+        <legend>Customize Colors</legend>
+
+        <div class="picker-row">
+            {@render colorPicker("Subject", "s", "subject")}
+            {@render colorPicker("First Reflector", "u", "first")}
+            {@render colorPicker("Second Reflector", "v", "second")}
+            {@render colorPicker("Reflected", "q", "reflected")}
+            {@render colorPicker("Rotated", "t", "rotated")}
+        </div>
+    </fieldset>
+</section>
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption>
+            The {@render textLabel(
+                "first reflector",
+                "First reflector plane (u)",
+                "first",
+            )} and the {@render textLabel(
+                "second reflector",
+                "second reflector plane (v)",
+                "second",
+            )} can again be composed into a rotor. The intersection point of both
+            planes will determine the {@render textLabel(
+                "pivot point",
+                "pivot (p)",
+                "pivot",
+            )}
+        </figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+            {/if}
+
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render labelPlane(plane, "First reflector (u)", colors.first)}
+            {@render labelPlane(plane2, "Second reflector (v)", colors.second)}
+
+            {@render ctrlPlane(plane, colors.first)}
+            {@render ctrlPlane(plane2, colors.second)}
+            {#if planeInter && len(planeInter) < 6}
+                <circle
+                    cx={planeInter.x * 100}
+                    cy={-planeInter.y * 100}
+                    r="5"
+                    stroke="black"
+                    fill="white"
+                    stroke-width="4"
+                ></circle>
+
+                {@render label(
+                    planeInter,
+                    "Pivot (p)",
+                    colors.pivot,
+                    ["pivot-label"],
+                    0,
+                    "start",
+                )}
+            {/if}
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            The {@render textLabel("subject", "Subject (s)", "subject")} is again
+            decomposed into the component
+            {@render textLabel("projected", "projected (p)", "projected")} onto
+            {@render textLabel(
+                "first reflector",
+                "first reflector (u)",
+                "first",
+            )} and the
+            <code
+                style="text-decoration: underline; text-decoration-style: dashed; background-color: #888;"
+                >orthogonal component</code
+            >. The {@render textLabel("reflected", "reflected", "reflected")} vector
+            is recomposed from those components.
+        </figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+                <g>
+                    {@render chiral(
+                        planeReflected,
+                        colors.reflected,
+                        reflectionPlaneMatrix(plane),
+                    )}</g
+                >
+            {/if}
+
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
+            {@render vec(planeReflected, colors.reflected)}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(planeReflected, "Reflected (q)", colors.reflected)}
+
+            {@render labelPlane(plane, "First reflector (u)", colors.first)}
+            {@render line(subject, planeProjected, "#888", "dashed faded")}
+            {@render line(
+                planeProjected,
+                planeReflected,
+                "#888",
+                "dashed faded",
+            )}
+
+            {@render ctrlPlane(plane, colors.first)}
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            The {@render textLabel(
+                "first reflection",
+                "first reflection (q)",
+                "reflected",
+            )}
+            is then reflected again. The result is the
+            {@render textLabel("rotated", "rotated", "rotated")} vector.
+        </figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+                <g>
+                    {@render chiral(
+                        planeReflected,
+                        colors.reflected,
+                        reflectionPlaneMatrix(plane),
+                    )}</g
+                >
+                <g>
+                    {@render chiral(
+                        planeRotated,
+                        colors.rotated,
+                        `${reflectionPlaneMatrix(plane2)} ${reflectionPlaneMatrix(plane)}`,
+                    )}</g
+                >
+            {/if}
+
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
+            {@render vec(planeReflected, colors.reflected)}
+            {@render vec(planeRotated, colors.rotated)}
+            {@render line(
+                planeReflected,
+                planeProjected2,
+                "#888",
+                "dashed faded",
+            )}
+            {@render line(
+                planeProjected2,
+                planeRotated,
+                "#888",
+                "dashed faded",
+            )}
+
+            {@render labelPlane(plane2, "Second reflector (v)", colors.second)}
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(
+                planeReflected,
+                "First reflection (q)",
+                colors.reflected,
+            )}
+            {@render label(planeRotated, "Rotated (t)", colors.rotated)}
+
+            {@render ctrlPlane(plane2, colors.second)}
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+                <g>
+                    {@render chiral(
+                        planeReflected,
+                        colors.reflected,
+                        reflectionPlaneMatrix(plane),
+                    )}</g
+                >
+                <g>
+                    {@render chiral(
+                        planeRotated,
+                        colors.rotated,
+                        `${reflectionPlaneMatrix(plane2)} ${reflectionPlaneMatrix(plane)}`,
+                    )}</g
+                >
+            {/if}
+
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
+            {@render pln(plane, colors.first)}
+            {@render pln(plane2, colors.second)}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+
+            {@render vec(subject, colors.subject)}
+            {@render vec(planeReflected, colors.reflected)}
+
+            {@render labelPlane(plane, "First reflector (u)", colors.first)}
+            {@render labelPlane(plane2, "Second reflector (v)", colors.second)}
+            {@render vec(planeRotated, colors.rotated)}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(
+                planeReflected,
+                "First reflection (q)",
+                colors.reflected,
+            )}
+            {@render label(planeRotated, "Rotated (t)", colors.rotated)}
+
+            {#if planeInter && len(planeInter) < 6}
+                <circle
+                    cx={planeInter.x * 100}
+                    cy={-planeInter.y * 100}
+                    r="5"
+                    stroke="black"
+                    fill="white"
+                    stroke-width="4"
+                ></circle>
+                {@render label(
+                    planeInter,
+                    "Pivot (p)",
+                    colors.pivot,
+                    ["pivot-label"],
+                    0,
+                    "start",
+                )}
+            {/if}
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+</div>
+<section>
+    <h2>Implementation</h2>
+    <p>
+        The implementaion is similar simple as before. The <code>dot</code> product
+        between vector and normal is be used to determinate the distance between vector
+        and plane. The normal scaled by this distance gives the component of the vector
+        thats perpendicular to the plane. For the reflection the original vector is
+        subtraced from twice the perpendicular component.
+    </p>
+    <pre>{`
+function planeProject(plane, subject) {
+  const distance = plane.distance - dot(subject, plane.normal)
+  const perpenticular = scale(distance, plane.normal)
+
+  return add(subject, perpenticular);
+}
+
+function planeReflect(plane, subject) {
+    const projected = planeProject(plane, subject)
+    const reflected = subtract(scale(2, projected), subject)
+    return reflected
+}
+    `.trim()}</pre>
     <h2>Circular Reflections</h2>
     <p>
         Instead of reflecting across a flat plane, we can also reflect with
@@ -1232,13 +1846,13 @@ const rotateHalf =
                 circleProjected,
                 circleReflected,
                 colors.first,
-                "dashed thin",
+                "dashed faded",
             )}
             {@render line(
                 subject,
                 circleProjected,
                 colors.first,
-                "dashed thin",
+                "dashed faded",
             )}
             {@render vec(subject, colors.subject)}
             {@render vec(circleReflected, colors.reflected)}
@@ -1367,14 +1981,14 @@ const rotateHalf =
             {@render line(
                 circleProjected2,
                 circleReflected2,
-                colors.first,
-                "dashed  thin",
+                colors.second,
+                "dashed faded",
             )}
             {@render line(
                 circleReflected,
                 circleProjected2,
-                colors.first,
-                "dashed  thin",
+                colors.second,
+                "dashed faded",
             )}
 
             {@render vec(subject, colors.subject)}
@@ -1549,7 +2163,8 @@ const rotateHalf =
             {@render textLabel("second", "second circle", "second")} circle is really
             far away, the scaling around this far pivot will cause the
             {@render textLabel("subject", "Subject s", "subject")} to be
-            {@render textLabel("rotated", "translated", "rotated")}.
+            {@render textLabel("rotated", "translated", "rotated")}, as the two
+            circles act as two parallel planes.
         </figcaption>
         <svg
             class="canvas"
@@ -1622,7 +2237,11 @@ const rotateHalf =
             </mask>
             {@render vec(translate(trans, subject), colors.rotated)}
             {@render label(subject, "Subject (s)", colors.subject)}
-            {@render label(trans.center, "Far away centers (f)", colors.first)}
+            {@render label(
+                scale(5, trans.center),
+                "Far away centers (f)",
+                colors.first,
+            )}
             {@render label(
                 translate(trans, subject),
                 "translated result (t)",
@@ -1635,7 +2254,7 @@ const rotateHalf =
             </g>
 
             {@render ctrl(subject, colors.subject)}
-            {@render ctrl(trans.center, colors.first, null, 500)}
+            {@render ctrl(trans.center, colors.first, null, 5)}
         </svg>
     </figure>
 </div>
@@ -1860,5 +2479,9 @@ const rotateHalf =
         display: flex;
         flex-wrap: wrap;
         gap: 0.5ex 1ex;
+    }
+
+    .pivot-label {
+        transform: translate(1ex, -1em);
     }
 </style>
