@@ -136,6 +136,11 @@
   resolved "https://registry.yarnpkg.com/@standard-schema/spec/-/spec-1.1.0.tgz#a79b55dbaf8604812f52d140b2c9ab41bc150bb8"
   integrity sha512-l2aFy5jALhniG5HgqrD6jXLi/rUWrKvqN/qJx6yoJsgKhblVd+iqqU4RCXavm/jPityDo5TCvKMnpjKnOriy0w==
 
+"@svatom/basic@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@svatom/basic/-/basic-2.1.0.tgz#abd533a77d8b6b3af1434855ca9210c32581336e"
+  integrity sha512-MnASZ+oQo8qA2j4Sc0RPMKCKQIS5LSWm0exlcbaj7WlG9PrSNHSHP6A2aUmwpKapeGEzi7701bvxaocmQPIQcA==
+
 "@sveltejs/acorn-typescript@^1.0.10", "@sveltejs/acorn-typescript@^1.0.9":
   version "1.0.13"
   resolved "https://registry.yarnpkg.com/@sveltejs/acorn-typescript/-/acorn-typescript-1.0.13.tgz#8c7c3cc7014e212f2e8fccee0159dbecfe602405"

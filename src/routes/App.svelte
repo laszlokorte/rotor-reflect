@@ -1,7 +1,22 @@
 <script>
     import Scene from "./Scene.svelte";
+    import fGrid from "./f_grid";
 
     const favicon = "favicon.svg";
+
+    let colors = $state({
+        subject: "royalblue",
+        first: "teal",
+        angle_a: "teal",
+        angle_b: "tomato",
+        second: "tomato",
+        projected: "rosybrown",
+        reflected: "orchid",
+        rotated: "yellowgreen",
+        angle: "#333",
+        rotor: "#aaa",
+    });
+
     let reflector = $state({
         x: 3,
         y: 2,
@@ -189,381 +204,6 @@
             (x < 3 || y < 3 || (x <= gridSize && Math.abs(y - gridSize) < 2))
         );
     }
-
-    const fGrid = [
-        {
-            x: 0,
-            y: 0,
-        },
-        {
-            x: 0,
-            y: 1,
-        },
-        {
-            x: 0,
-            y: 2,
-        },
-        {
-            x: 0,
-            y: 3,
-        },
-        {
-            x: 0,
-            y: 4,
-        },
-        {
-            x: 0,
-            y: 5,
-        },
-        {
-            x: 0,
-            y: 6,
-        },
-        {
-            x: 0,
-            y: 7,
-        },
-        {
-            x: 0,
-            y: 8,
-        },
-        {
-            x: 0,
-            y: 9,
-        },
-        {
-            x: 0,
-            y: 10,
-        },
-        {
-            x: 0,
-            y: 11,
-        },
-        {
-            x: 0,
-            y: 12,
-        },
-        {
-            x: 0,
-            y: 13,
-        },
-        {
-            x: 0,
-            y: 14,
-        },
-        {
-            x: 0,
-            y: 15,
-        },
-        {
-            x: 0,
-            y: 16,
-        },
-        {
-            x: 1,
-            y: 0,
-        },
-        {
-            x: 1,
-            y: 1,
-        },
-        {
-            x: 1,
-            y: 2,
-        },
-        {
-            x: 1,
-            y: 3,
-        },
-        {
-            x: 1,
-            y: 4,
-        },
-        {
-            x: 1,
-            y: 5,
-        },
-        {
-            x: 1,
-            y: 6,
-        },
-        {
-            x: 1,
-            y: 7,
-        },
-        {
-            x: 1,
-            y: 8,
-        },
-        {
-            x: 1,
-            y: 9,
-        },
-        {
-            x: 1,
-            y: 10,
-        },
-        {
-            x: 1,
-            y: 11,
-        },
-        {
-            x: 1,
-            y: 12,
-        },
-        {
-            x: 1,
-            y: 13,
-        },
-        {
-            x: 1,
-            y: 14,
-        },
-        {
-            x: 1,
-            y: 15,
-        },
-        {
-            x: 1,
-            y: 16,
-        },
-        {
-            x: 2,
-            y: 0,
-        },
-        {
-            x: 2,
-            y: 1,
-        },
-        {
-            x: 2,
-            y: 2,
-        },
-        {
-            x: 2,
-            y: 3,
-        },
-        {
-            x: 2,
-            y: 4,
-        },
-        {
-            x: 2,
-            y: 5,
-        },
-        {
-            x: 2,
-            y: 6,
-        },
-        {
-            x: 2,
-            y: 7,
-        },
-        {
-            x: 2,
-            y: 8,
-        },
-        {
-            x: 2,
-            y: 9,
-        },
-        {
-            x: 2,
-            y: 10,
-        },
-        {
-            x: 2,
-            y: 11,
-        },
-        {
-            x: 2,
-            y: 12,
-        },
-        {
-            x: 2,
-            y: 13,
-        },
-        {
-            x: 2,
-            y: 14,
-        },
-        {
-            x: 2,
-            y: 15,
-        },
-        {
-            x: 2,
-            y: 16,
-        },
-        {
-            x: 3,
-            y: 0,
-        },
-        {
-            x: 3,
-            y: 1,
-        },
-        {
-            x: 3,
-            y: 2,
-        },
-        {
-            x: 3,
-            y: 7,
-        },
-        {
-            x: 3,
-            y: 8,
-        },
-        {
-            x: 3,
-            y: 9,
-        },
-        {
-            x: 4,
-            y: 0,
-        },
-        {
-            x: 4,
-            y: 1,
-        },
-        {
-            x: 4,
-            y: 2,
-        },
-        {
-            x: 4,
-            y: 7,
-        },
-        {
-            x: 4,
-            y: 8,
-        },
-        {
-            x: 4,
-            y: 9,
-        },
-        {
-            x: 5,
-            y: 0,
-        },
-        {
-            x: 5,
-            y: 1,
-        },
-        {
-            x: 5,
-            y: 2,
-        },
-        {
-            x: 5,
-            y: 7,
-        },
-        {
-            x: 5,
-            y: 8,
-        },
-        {
-            x: 5,
-            y: 9,
-        },
-        {
-            x: 6,
-            y: 0,
-        },
-        {
-            x: 6,
-            y: 1,
-        },
-        {
-            x: 6,
-            y: 2,
-        },
-        {
-            x: 6,
-            y: 7,
-        },
-        {
-            x: 6,
-            y: 8,
-        },
-        {
-            x: 6,
-            y: 9,
-        },
-        {
-            x: 7,
-            y: 0,
-        },
-        {
-            x: 7,
-            y: 1,
-        },
-        {
-            x: 7,
-            y: 2,
-        },
-        {
-            x: 7,
-            y: 7,
-        },
-        {
-            x: 7,
-            y: 8,
-        },
-        {
-            x: 7,
-            y: 9,
-        },
-        {
-            x: 8,
-            y: 0,
-        },
-        {
-            x: 8,
-            y: 1,
-        },
-        {
-            x: 8,
-            y: 2,
-        },
-        {
-            x: 8,
-            y: 7,
-        },
-        {
-            x: 8,
-            y: 8,
-        },
-        {
-            x: 8,
-            y: 9,
-        },
-        {
-            x: 9,
-            y: 0,
-        },
-        {
-            x: 9,
-            y: 1,
-        },
-        {
-            x: 9,
-            y: 2,
-        },
-        {
-            x: 10,
-            y: 0,
-        },
-        {
-            x: 10,
-            y: 1,
-        },
-        {
-            x: 10,
-            y: 2,
-        },
-    ];
 
     function translate(t, v) {
         return add(v, scale(t.radiusA - t.radiusB, norm(t.center)));
@@ -955,6 +595,10 @@
     </g>
 {/snippet}
 
+{#snippet textLabel(long, short, type)}
+    <code class="color-label" style:--color={colors[type]}>{short}</code>
+{/snippet}
+
 <svelte:head>
     <title>Rotation via Double Reflection</title>
 </svelte:head>
@@ -965,54 +609,67 @@
         Rotation via Double Reflection
     </h1>
     <p>
-        This is a demonstration how any rotation of a vector <code
-            class="name-s">s</code
-        > can be achieved by two successive reflections.
+        This is a demonstration how any rotation of a vector {@render textLabel(
+            "subject",
+            "s",
+            "subject",
+        )} can be achieved by two successive reflections.
+    </p>
+    <h2>Reflecting at a vector</h2>
+    <p>
+        A reflection of vector {@render textLabel("subject", "s", "subject")} at vector
+        {@render textLabel("first reflector", "u", "first")} is achieved by first
+        projecting
+        {@render textLabel("subject", "s", "subject")}
+        onto {@render textLabel("first reflector", "u", "first")} and then adding
+        the difference betwen
+        {@render textLabel("subject", "s", "subject")} and the projection.
     </p>
     <p>
-        A reflection of vector <code class="name-s">s</code> at vector
-        <code class="name-u">u</code> is achieved by first projecting
-        <code class="name-s">s</code>
-        onto <code class="name-u">u</code> and then adding the difference betwen
-        <code class="name-s">s</code> and the projection.
-    </p>
-    <p>
-        A reflection of vector <code class="name-s">s</code> at vector
-        <code class="name-u">u</code>
-        followed by a reflection at vector <code class="name-v">v</code> results
-        in a rotation of <code class="name-s">s</code> in the plane spanned by
-        vectors
-        <code class="name-u">u</code>
+        A reflection of vector {@render textLabel("subject", "s", "subject")} at vector
+        {@render textLabel("first reflector", "u", "first")}
+        followed by a reflection at vector {@render textLabel(
+            "second reflector",
+            "v",
+            "second",
+        )} results in a rotation of {@render textLabel(
+            "subject",
+            "s",
+            "subject",
+        )} in the plane spanned by vectors
+        {@render textLabel("first reflector", "u", "first")}
         and
-        <code class="name-s">v</code>.
+        {@render textLabel("second reflector", "v", "second")}.
     </p>
     <p>
-        The angle of the rotation is twice as large as the angle between vector <code
-            class="name-u">u</code
-        >
+        The angle of the rotation is twice as large as the angle between vector {@render textLabel(
+            "first reflector",
+            "u",
+            "first",
+        )}
         and vector
-        <code class="name-v">v</code>.
+        {@render textLabel("second reflector", "v", "second")}.
     </p>
     <p>
         In general to construct a rotation of angle
-        <code class="name-alpha">&alpha;</code>
+        {@render textLabel("angle", "α", "angle")}
         you just need to construct two vectors that enclose an angle
-        <code><code class="name-alpha">&alpha;</code> / 2</code> and then use them
-        as reflectors for the subject vector.
+        {@render textLabel("half angle", "α/2", "angle")} and then use them as reflectors
+        for the subject vector.
     </p>
 
     <p>
-        The pair of vector <code class="name-u">u</code> and
-        <code class="name-s">v</code>
+        The pair of vector {@render textLabel("first reflector", "u", "first")} and
+        {@render textLabel("second reflector", "v", "second")}
         is called a rotor.
     </p>
     <p>
         Notice that only the relative orientation between
-        <code class="name-u">u</code>
-        and <code class="name-s">v</code>
-        affect the rotation result. Try drag the arc segment called
-        <code class="name-rotor">rotor</code> below to change the direction of both
-        reflectors at once.
+        {@render textLabel("first reflector", "u", "first")}
+        and {@render textLabel("second reflector", "v", "second")}
+        affect the rotation result. Try drag the arc segment
+        {@render textLabel("rotor", "r", "rotor")} below to change the direction of
+        both reflectors at once.
     </p>
 
     <fieldset>
@@ -1027,10 +684,18 @@
 <div class="grid">
     <figure class="grid-item">
         <figcaption>
-            The <code class="name-s">Subject</code> together with the pair (<code
-                class="name-u">First</code
-            >, <code class="name-v">Second</code>) of reflection vectors of the
-            <code style="background-color: #888;">rotor</code>.
+            The {@render textLabel("subject", "Subject s", "subject")} together with
+            the pair ({@render textLabel(
+                "first reflector",
+                "First reflector u",
+                "first",
+            )},
+            {@render textLabel(
+                "second reflector",
+                "second reflector v",
+                "second",
+            )}) of reflection vectors of the
+            {@render textLabel("rotor", "rotor r", "rotor")}.
         </figcaption>
         <svg
             class="canvas"
@@ -1040,38 +705,39 @@
             preserveAspectRatio="xMidYMid meet"
         >
             {#if showChiral}
-                {@render chiral(subject, "royalblue")}
+                {@render chiral(subject, colors.subject)}
             {/if}
 
             {@render axis()}
-            {@render vec(subject, "royalblue")}
+            {@render vec(subject, colors.subject)}
 
-            {@render vec(rotor.from, "teal")}
-            {@render vec(rotor.to, "tomato")}
+            {@render vec(rotor.from, colors.first)}
+            {@render vec(rotor.to, colors.second)}
 
-            {@render label(subject, "Subject", "royalblue")}
-            {@render label(rotor.from, "First Reflector", "teal")}
-            {@render label(rotor.to, "Second Reflector", "tomato")}
+            {@render label(subject, "Subject s", colors.subject)}
+            {@render label(rotor.from, "First Reflector u", colors.first)}
+            {@render label(rotor.to, "Second Reflector v", colors.second)}
 
             {@render arc(rotor.from, rotor.to, "gray")}
-            {@render arclabel(rotor.from, rotor.to, "rotor", "gray")}
+            {@render arclabel(rotor.from, rotor.to, "rotor r", "gray")}
 
             {@render arcctrl(rotor.from, rotor.to, "none")}
-            {@render ctrl(subject, "royalblue")}
-            {@render ctrl(rotor.from, "teal")}
-            {@render ctrl(rotor.to, "tomato")}
+            {@render ctrl(subject, colors.subject)}
+            {@render ctrl(rotor.from, colors.first)}
+            {@render ctrl(rotor.to, colors.second)}
         </svg>
     </figure>
     <figure class="grid-item">
         <figcaption>
-            The <code class="name-s">Subject</code> is decomposed into the
-            component
-            <code style="background: RosyBrown;">Projected</code> onto
-            <code class="name-u">First reflector</code> and the
+            The {@render textLabel("subject", "Subject s", "subject")} is decomposed
+            into the component
+            {@render textLabel("projected", "projected (p)", "projected")} onto
+            {@render textLabel("first reflector", "first reflector u", "first")} and
+            the
             <code
                 style="text-decoration: underline; text-decoration-style: dashed; background-color: #888;"
                 >orthogonal component</code
-            >. The <code style="background-color: orchid;">Reflected</code> vector
+            >. The {@render textLabel("reflected", "reflected", "reflected")} vector
             is recomposed from those components.
         </figcaption>
         <svg
@@ -1082,7 +748,7 @@
             preserveAspectRatio="xMidYMid meet"
         >
             {#if showChiral}
-                {@render chiral(subject, "royalblue")}
+                {@render chiral(subject, colors.subject)}
                 {@render chiral(
                     reflected,
                     "orchid",
@@ -1093,27 +759,35 @@
             {@render line(subject, projected, "black", "dashed faded")}
             {@render line(projected, reflected, "black", "dashed faded")}
 
-            {@render vec(subject, "royalblue")}
-            {@render vec(reflector, "teal")}
-            {@render vec(reflected, "orchid")}
+            {@render vec(subject, colors.subject)}
+            {@render vec(reflector, colors.first)}
+            {@render vec(reflected, colors.reflected)}
             {@render vec(projected, "RosyBrown", "thick")}
 
-            {@render label(subject, "Subject", "royalblue")}
-            {@render label(reflector, "First Reflector", "teal")}
-            {@render label(projected, "Projected", "RosyBrown")}
-            {@render label(reflected, "Reflected", "orchid")}
+            {@render label(subject, "Subject s", colors.subject)}
+            {@render label(reflector, "First Reflector u", colors.first)}
+            {@render label(projected, "Projected (p)", "RosyBrown")}
+            {@render label(reflected, "Reflected q", colors.reflected)}
 
-            {@render ctrl(subject, "royalblue")}
-            {@render ctrl(reflector, "teal")}
+            {@render ctrl(subject, colors.subject)}
+            {@render ctrl(reflector, colors.first)}
         </svg>
     </figure>
     <figure class="grid-item">
         <figcaption>
-            The <code style="background-color: orchid;">First reflection</code>
+            The {@render textLabel(
+                "first reflection",
+                "first reflection q",
+                "reflected",
+            )}
             is then reflected again. This time it is
-            <code style="background-color: rebeccapurple;">Projected</code>
+            <code style="background-color: rebeccapurple;">Projected (o)</code>
             onto the
-            <code class="name-v">Second Reflector</code>. The result is the
+            {@render textLabel(
+                "second reflector",
+                "second reflector v",
+                "second",
+            )}. The result is the
             <code style="background-color: yellowgreen;">Rotated</code> vector.
         </figcaption>
         <svg
@@ -1138,38 +812,66 @@
             {@render axis()}
             {@render line(reflected, projected2, "black", "dashed faded")}
             {@render line(projected2, rotated, "black", "dashed faded")}
-            {@render vec(subject, "royalblue")}
+            {@render vec(subject, colors.subject)}
 
-            {@render vec(rotor.to, "tomato")}
-            {@render vec(reflected, "orchid")}
-            {@render vec(rotated, "yellowgreen")}
+            {@render vec(rotor.to, colors.second)}
+            {@render vec(reflected, colors.reflected)}
+            {@render vec(rotated, colors.rotated)}
             {@render vec(projected2, "RebeccaPurple", "thick")}
 
             {@render arc(subject, rotated, "gray")}
 
-            {@render label(subject, "Subject", "royalblue")}
-            {@render label(rotor.to, "Second Reflector", "tomato")}
-            {@render label(projected2, "Projected", "RebeccaPurple")}
-            {@render label(rotated, "Rotated", "yellowgreen")}
-            {@render label(reflected, "First Reflection", "orchid")}
+            {@render label(subject, "Subject s", colors.subject)}
+            {@render label(rotor.to, "Second Reflector v", colors.second)}
+            {@render label(projected2, "Projected (o)", "RebeccaPurple")}
+            {@render label(rotated, "Rotated t", colors.rotated)}
+            {@render label(reflected, "First Reflection q", colors.reflected)}
 
             {@render arcctrl(subject, rotated, "none")}
-            {@render ctrl(subject, "royalblue")}
-            {@render ctrl(rotor.to, "tomato")}
+            {@render ctrl(subject, colors.subject)}
+            {@render ctrl(rotor.to, colors.second)}
         </svg>
     </figure>
     <figure class="grid-item">
         <figcaption>
-            Drawing the angles between the interim results shows that the angle
-            between <code class="name-s">Subject</code> and
-            <code style="background-color: yellowgreen">Rotated</code> is the
-            sum of two angles. The one angle is twice the difference between
-            <code class="name-s">Subject</code>
-            and <code class="name-u">First Reflector</code>. The second angle is
-            twice the difference between the
-            <code style="background-color: orchid;">First Reflection</code>
-            and the
-            <code style="background-color: yellowgreen;">Rotated</code> result.
+            <p>
+                Drawing the angles between the interim results shows that the
+                angle between {@render textLabel(
+                    "subject",
+                    "Subject s",
+                    "subject",
+                )} and
+                {@render textLabel("rotated", "Rotated t", "rotated")} is the sum
+                of two angles.
+            </p>
+            <p>
+                The {@render textLabel(
+                    "first angle",
+                    "first angle (β)",
+                    "angle_a",
+                )} is twice the difference between
+                {@render textLabel("subject", "Subject s", "subject")}
+                and {@render textLabel(
+                    "First reflector",
+                    "First reflector u",
+                    "first",
+                )}. The {@render textLabel(
+                    "second angle",
+                    "second angle (γ)",
+                    "angle_b",
+                )} is twice the angle between the
+                {@render textLabel(
+                    "First reflection",
+                    "First reflection q",
+                    "reflected",
+                )}
+                and the
+                {@render textLabel(
+                    "rotated result",
+                    "Rotated result (t)",
+                    "rotated",
+                )} result.
+            </p>
         </figcaption>
         <svg
             class="canvas"
@@ -1181,7 +883,7 @@
             {@render axis()}
 
             {#if showChiral}
-                {@render chiral(subject, "royalblue")}
+                {@render chiral(subject, colors.subject)}
                 {@render chiral(
                     reflected,
                     "orchid",
@@ -1194,37 +896,38 @@
                 )}
             {/if}
 
-            {@render vec(subject, "royalblue")}
-            {@render vec(reflector, "teal")}
-            {@render vec(scale(-1, reflector), "teal", "dashed nodir")}
-            {@render vec(reflected, "orchid")}
+            {@render vec(subject, colors.subject)}
+            {@render vec(reflector, colors.first)}
+            {@render vec(scale(-1, reflector), colors.first, "dashed nodir")}
+            {@render vec(reflected, colors.reflected)}
 
-            {@render vec(rotated, "yellowgreen")}
-            {@render vec(rotor.to, "tomato")}
-            {@render vec(scale(-1, rotor.to), "tomato", "dashed nodir")}
+            {@render vec(rotated, colors.rotated)}
+            {@render vec(rotor.to, colors.second)}
+            {@render vec(scale(-1, rotor.to), colors.second, "dashed nodir")}
 
             {#if arcDirection(subject, reflected, rotated)}
-                {@render arc(subject, reflected, "teal")}
-                {@render arc(reflected, rotated, "tomato")}
+                {@render arc(subject, reflected, colors.angle_a)}
+                {@render arc(reflected, rotated, colors.angle_b)}
             {:else}
-                {@render arc(rotated, reflected, "tomato")}
-                {@render arc(reflected, subject, "teal")}
+                {@render arc(rotated, reflected, colors.angle_b)}
+                {@render arc(reflected, subject, colors.angle_a)}
             {/if}
 
-            {@render label(rotor.to, "Second Reflector", "tomato")}
-            {@render label(subject, "Subject", "royalblue")}
-            {@render label(reflector, "First Reflector", "teal")}
-            {@render label(reflected, "First Reflection", "orchid")}
+            {@render label(rotor.to, "Second Reflector v", colors.second)}
+            {@render label(subject, "Subject s", colors.subject)}
+            {@render label(reflector, "First Reflector u", colors.first)}
+            {@render label(reflected, "First Reflection q", colors.reflected)}
 
-            {@render label(rotated, "Rotated", "yellowgreen")}
+            {@render label(rotated, "Rotated t", colors.rotated)}
 
-            {@render ctrl(subject, "royalblue")}
-            {@render ctrl(reflector, "teal")}
-            {@render ctrl(reflector2, "tomato")}
+            {@render ctrl(subject, colors.subject)}
+            {@render ctrl(reflector, colors.first)}
+            {@render ctrl(reflector2, colors.second)}
         </svg>
     </figure>
 </div>
 <section>
+    <h2>Implementation</h2>
     <p>
         Take a look at the implementation below. No trigonometric use of <code
             >sin</code
@@ -1271,24 +974,34 @@ const rotateHalf =
 
 <section>
     <h2>3 Dimensions</h2>
-    <p>The same approch also works for 3 dimensions and higher dimensions.</p>
+    <p>The same approch also works for 3 dimensions.</p>
     <p>
-        Below you can see the <code class="name-s">subject</code> vector rotated
-        in the plane spanned by the
-        <code style="background-color: magenta">first</code>
+        Below you can see the {@render textLabel(
+            "subject",
+            "Subject s",
+            "subject",
+        )} vector rotated in the <code>plane</code> spanned by the
+        {@render textLabel("first reflector", "first reflector u", "first")}
         and
-        <code style="background-color: teal">second</code> reflector.
+        {@render textLabel("second reflector", "second reflector u", "second")}.
     </p>
     <p>
         The reflection at the
-        <code style="background-color: magenta">first reflector</code>
-        mirrors the <code class="name-s">subject</code> onto
-        <code>the first reflection</code>
-        on the opposite side of the plane. The following reflection at the
-        <code style:background-color="teal">second reflector</code> brings the
-        vector back to the original side of the plane. So the orientation
-        between the
-        <code class="name-s">subject</code> and the rotation plane is restored.
+        {@render textLabel("first reflector", "first reflector u", "first")}
+        mirrors the {@render textLabel("subject", "Subject s", "subject")} onto
+        {@render textLabel(
+            "first reflection",
+            "first reflection q",
+            "reflected",
+        )}
+        on the opposite side of the <code>plane</code>. The subsequent
+        reflection at the
+        {@render textLabel("second reflector", "second reflector u", "second")} brings
+        the vector back to the original side of the plane. So the orientation between
+        the
+        {@render textLabel("subject", "Subject s", "subject")} and the
+        <code>rotation plane</code>
+        is restored.
     </p>
     <p>
         During this zic-zac motion across the plane the vector still rotates <em
@@ -1299,14 +1012,51 @@ const rotateHalf =
 
 <div class="grid" style:background="none">
     <figure class="grid-item">
-        <Scene></Scene>
+        <Scene {colors}></Scene>
     </figure>
 </div>
 <section>
+    <h2>Higher dimesions</h2>
+    <p>
+        To make the same approach work for higher dimensions we have to refine
+        our understanding of what actually happens during a reflection.
+    </p>
+    <p>
+        By reflection we usually mean that something something is on the
+        opposite side of something else (the mirror) but at the same distance.
+    </p>
+    <p>
+        In 2d, there is only one possibility for something to be <em
+            >on the other side</em
+        >
+        of a vector. In 3d, for a single vector, the <em>other side</em> depends on
+        the original position of the subject. But as long as we combine two reflections
+        in a row, we do not need to care too much because this ambiguity cancels out.
+    </p>
+    <p>
+        But to work reflections across any number of dimensions we need
+        something to always determine <em>the other side</em> precisely and
+        uniquely. What we are looking for is a <em>plane</em>.
+    </p>
+</section>
+<section>
+    <h2>Reflecting at a plane</h2>
+    <p>
+        A flat plane cuts the space into two regions: The part on the one side
+        of the plane (outside) and the other part of the plane (inside).
+    </p>
+    <p>
+        A simple way to define a flat plane is by its normal vector and a
+        distance. The normal vector points to the outside. The distance
+        determines how far from the origin along the normal direction something
+        needs to be to actually be counted to the outside.
+    </p>
+</section>
+<section>
     <h2>Circular Reflections</h2>
     <p>
-        Instead of reflecting across a vector, we can also reflect with respect
-        to more complex objects. One interesting example is the circular
+        Instead of reflecting across a flat plane, we can also reflect with
+        respect to more complex objects. One interesting example is the circular
         reflection. A circular reflection maps points inside the circle to the
         outside and points outside the circle to the inside, while preserving
         the direction from the circle's center to the reflected point. In other
@@ -1384,7 +1134,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="royalblue"
+                            fill={colors.subject}
                         />
                         >
                     {/each}
@@ -1429,11 +1179,16 @@ const rotateHalf =
                 "teal",
                 "dashed thin",
             )}
-            {@render line(subject, circleProjected, "teal", "dashed thin")}
-            {@render vec(subject, "royalblue")}
-            {@render vec(circleReflected, "orchid")}
+            {@render line(
+                subject,
+                circleProjected,
+                colors.first,
+                "dashed thin",
+            )}
+            {@render vec(subject, colors.subject)}
+            {@render vec(circleReflected, colors.reflected)}
 
-            {@render ctrl(subject, "royalblue")}
+            {@render ctrl(subject, colors.subject)}
             <circle
                 cx={circleReflected.x * 100}
                 cy={-circleReflected.y * 100}
@@ -1447,8 +1202,8 @@ const rotateHalf =
                 r="5"
             ></circle>
 
-            {@render label(subject, "Subject", "royalblue")}
-            {@render label(circleReflected, "Reflected", "orchid")}
+            {@render label(subject, "Subject", colors.subject)}
+            {@render label(circleReflected, "Reflected", colors.reflected)}
             {@render label(
                 circle.center,
                 "Circular Reflector",
@@ -1458,8 +1213,8 @@ const rotateHalf =
                 false,
             )}
 
-            {@render ctrl(circle.center, "teal")}
-            {@render ctrlRad(circle, "teal")}
+            {@render ctrl(circle.center, colors.first)}
+            {@render ctrlRad(circle, colors.first)}
         </svg>
     </figure>
     <figure class="grid-item">
@@ -1551,7 +1306,7 @@ const rotateHalf =
                 r={circle2.radius * 100}
             ></circle>
 
-            {@render vec(circleReflected, "orchid")}
+            {@render vec(circleReflected, colors.reflected)}
             {@render line(
                 circleProjected2,
                 circleReflected2,
@@ -1565,8 +1320,8 @@ const rotateHalf =
                 "dashed  thin",
             )}
 
-            {@render vec(subject, "royalblue")}
-            {@render vec(circleReflected2, "yellowgreen")}
+            {@render vec(subject, colors.subject)}
+            {@render vec(circleReflected2, colors.rotated)}
 
             <circle
                 cx={circleReflected.x * 100}
@@ -1597,15 +1352,15 @@ const rotateHalf =
                 false,
             )}
 
-            {@render label(circleReflected, "Reflected", "orchid")}
-            {@render label(circleReflected2, "Reflected Twice", "yellowgreen")}
-            {@render label(subject, "Subject", "royalblue")}
-            {@render ctrlRad(circle, "teal")}
-            {@render ctrlRad(circle2, "tomato")}
+            {@render label(circleReflected, "Reflected", colors.reflected)}
+            {@render label(circleReflected2, "Reflected Twice", colors.rotated)}
+            {@render label(subject, "Subject", colors.subject)}
+            {@render ctrlRad(circle, colors.first)}
+            {@render ctrlRad(circle2, colors.second)}
 
-            {@render ctrl(subject, "royalblue")}
-            {@render ctrl(circle.center, "teal")}
-            {@render ctrl(circle2.center, "tomato")}
+            {@render ctrl(subject, colors.subject)}
+            {@render ctrl(circle.center, colors.first)}
+            {@render ctrl(circle2.center, colors.second)}
         </svg>
     </figure>
     <figure class="grid-item">
@@ -1668,7 +1423,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="royalblue"
+                            fill={colors.subject}
                         />
                         >
                     {/each}
@@ -1720,16 +1475,16 @@ const rotateHalf =
                 r={circle3.radius * 100}
             ></circle>
 
-            {@render vec(circleReflected, "orchid")}
+            {@render vec(circleReflected, colors.reflected)}
 
-            {@render vec(subject, "royalblue")}
-            {@render vec(circleScaled, "yellowgreen")}
+            {@render vec(subject, colors.subject)}
+            {@render vec(circleScaled, colors.rotated)}
 
-            {@render ctrlRad(circle, "teal")}
-            {@render ctrlRad(circle2, "tomato", null, circle.center)}
+            {@render ctrlRad(circle, colors.first)}
+            {@render ctrlRad(circle2, colors.second, null, circle.center)}
 
-            {@render ctrl(subject, "royalblue")}
-            {@render ctrl(circle.center, "teal")}
+            {@render ctrl(subject, colors.subject)}
+            {@render ctrl(circle.center, colors.first)}
         </svg>
     </figure>
     <figure class="grid-item">
@@ -1740,7 +1495,7 @@ const rotateHalf =
             and the
             <code style:background-color="tomato">second</code> circle is really
             far away, the scaling around this far pivot will cause the
-            <code class="name-s">subject</code> to be
+            {@render textLabel("subject", "Subject s", "subject")} to be
             <code style:background-color="yellowgreen">translated</code>.
         </figcaption>
         <svg
@@ -1767,7 +1522,7 @@ const rotateHalf =
                             stroke={"none"}
                             stroke-opacity="0.7"
                             stroke-width="20"
-                            fill="royalblue"
+                            fill={colors.subject}
                         />
                         >
                     {/each}
@@ -1812,22 +1567,22 @@ const rotateHalf =
                     stroke-dasharray="20 20"
                 ></circle>
             </mask>
-            {@render vec(translate(trans, subject), "yellowgreen")}
-            {@render label(subject, "subject", "royalblue")}
-            {@render label(trans.center, "Far away center", "teal")}
+            {@render vec(translate(trans, subject), colors.rotated)}
+            {@render label(subject, "subject", colors.subject)}
+            {@render label(trans.center, "Far away center", colors.first)}
             {@render label(
                 translate(trans, subject),
                 "translated result",
                 "yellowgreen",
             )}
 
-            {@render vec(subject, "royalblue")}
+            {@render vec(subject, colors.subject)}
             <g mask="url(#far-mask)">
-                {@render ctrlTransRads(trans, ["tomato", "teal"])}
+                {@render ctrlTransRads(trans, ["tomato", colors.first])}
             </g>
 
-            {@render ctrl(subject, "royalblue")}
-            {@render ctrl(trans.center, "teal", null, 500)}
+            {@render ctrl(subject, colors.subject)}
+            {@render ctrl(trans.center, colors.first, null, 500)}
         </svg>
     </figure>
 </div>
@@ -1955,17 +1710,6 @@ const rotateHalf =
         opacity: 0.3;
     }
 
-    .name-u {
-        background-color: teal;
-    }
-    .name-v {
-        background-color: tomato;
-    }
-
-    .name-s {
-        background-color: royalblue;
-    }
-
     h1 img {
         width: 1em;
         height: 1em;
@@ -2031,5 +1775,9 @@ const rotateHalf =
         .touch-point {
             r: 4em;
         }
+    }
+
+    .color-label {
+        background-color: var(--color, #111);
     }
 </style>

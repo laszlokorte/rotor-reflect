@@ -15,6 +15,8 @@
     import Face from "./Face.svelte";
     import Sector from "./Sector.svelte";
 
+    let { colors } = $props();
+
     const dot = (a, b) => a.x * b.x + a.y * b.y + a.z * b.z;
 
     const len2 = (v) => dot(v, v);
@@ -55,7 +57,7 @@
         <T.PerspectiveCamera
             fov={50}
             makeDefault
-            position={[10, 5, 15]}
+            position={[6.5, 8, 15]}
             lookAt.y={5.0}
         >
             <OrbitControls
@@ -83,55 +85,36 @@
             renderOrder={-1}
             cellColor="#ccc"
         />
-        <T.AmbientLight />
-        <T.DirectionalLight position={[20, 30, 10]}></T.DirectionalLight>
-        <T.DirectionalLight position={[0, -20, -10]}></T.DirectionalLight>
-
-        {#if box}
-            <T.Mesh position.y={2.55}>
-                <T.BoxGeometry args={[5, 5, 6]} />
-
-                <T.MeshStandardMaterial color="rebeccapurple" />
-            </T.Mesh>
-            <T.Mesh position.y={2.55}>
-                <T.BoxGeometry args={[5, 5, 6]} />
-
-                <FakeGlowMaterial
-                    falloff={0.6}
-                    glowColor="purple"
-                    opacity={0.5}
-                />
-            </T.Mesh>
-        {/if}
+        <T.AmbientLight intensity={5} />
 
         <T.Mesh position={[0, 0, 0]}>
             <T.SphereGeometry args={[0.1, 8, 8]} />
             <T.MeshStandardMaterial color={0x000000} />
         </T.Mesh>
 
-        <Arrow target={vector} color="royalblue" />
-        <Arrow target={reflectionA} color="darkmagenta" />
-        <Arrow target={reflectionB} color="teal" />
-        <Arrow target={rotor.from} color="magenta" />
-        <Arrow target={rotor.to} color="cyan" />
+        <Arrow target={vector} color={colors.subject} />
+        <Arrow target={reflectionA} color={colors.reflected} />
+        <Arrow target={reflectionB} color={colors.rotated} />
+        <Arrow target={rotor.from} color={colors.first} />
+        <Arrow target={rotor.to} color={colors.second} />
         <Sector
             from={new THREE.Vector3(rotor.from.x, rotor.from.y, rotor.from.z)}
             to={new THREE.Vector3(rotor.to.x, rotor.to.y, rotor.to.z)}
-            color="orange"
+            color={colors.angle}
             radius={3}
         />
         <Sector
             from={new THREE.Vector3(vector.x, vector.y, vector.z)}
             to={new THREE.Vector3(reflectionB.x, reflectionB.y, reflectionB.z)}
             normal={rotorNormal}
-            color="red"
+            color={colors.angle}
             radius={3}
         />
 
         <Sector
             from={new THREE.Vector3(vector.x, vector.y, vector.z)}
             to={new THREE.Vector3(reflectionA.x, reflectionA.y, reflectionA.z)}
-            color="magenta"
+            color={colors.first}
             radius={3}
         />
         <Sector
@@ -141,11 +124,11 @@
                 reflectionB.z,
             )}
             to={new THREE.Vector3(reflectionA.x, reflectionA.y, reflectionA.z)}
-            color="aqua"
+            color={colors.second}
             radius={3}
         />
         <Face {bivector} color="black" />
-        <Arrow target={rotorNormal.multiplyScalar(-5)} color="yellow" />
+        <Arrow target={rotorNormal.multiplyScalar(-5)} color={colors.angle} />
         <!--
 
 	<Arrow target={{ ...vector, y: 0, z: 0 }} color="red" />
@@ -157,7 +140,7 @@
                 anchorX="center"
                 anchorY="center"
                 fontSize={0.5}
-                color="darkcyan"
+                color={colors.rotated}
                 text="rotated"
                 renderOrder={10000}
             >
@@ -169,8 +152,8 @@
                 anchorX="center"
                 anchorY="center"
                 fontSize={0.5}
-                color="black"
-                text="first reflection"
+                color={colors.reflected}
+                text="first reflection q"
                 renderOrder={10000}
             >
                 <T.MeshBasicMaterial depthTest={false} depthWrite={false} />
@@ -182,7 +165,7 @@
                 anchorX="center"
                 anchorY="center"
                 fontSize={0.5}
-                color="brown"
+                color={colors.angle}
                 text="rotor axis"
                 renderOrder={10000}
             >
@@ -194,8 +177,8 @@
                 anchorX="center"
                 anchorY="center"
                 fontSize={0.5}
-                color="royalblue"
-                text="subject"
+                color={colors.subject}
+                text="Subject s"
                 renderOrder={10000}
             >
                 <T.MeshBasicMaterial depthTest={false} depthWrite={false} />
@@ -214,8 +197,8 @@
                 anchorY="center"
                 textAlign="center"
                 fontSize={0.5}
-                color="magenta"
-                text="first reflector"
+                color={colors.first}
+                text="first reflector u"
                 renderOrder={10000}
             >
                 <T.MeshBasicMaterial depthTest={false} depthWrite={false} />
@@ -231,27 +214,13 @@
                 anchorY="center"
                 textAlign="center"
                 fontSize={0.5}
-                color="darkcyan"
-                text="second reflector"
+                color={colors.second}
+                text="second reflector v"
                 renderOrder={10000}
             >
                 <T.MeshBasicMaterial depthTest={false} depthWrite={false} />
             </Text>
         </Billboard>
-
-        <!--
-		<Billboard position={[vector.x, 1, -1]}>
-			<Text textAlign="center" fontSize={0.5} color="red" text="X" />
-		</Billboard>
-
-		<Billboard position={[0, vector.y + 1.5, 0]}>
-			<Text fontSize={0.5} textAlign="center" color="green" text="Y" />
-		</Billboard>
-
-		<Billboard position={[-1, 1, vector.z]}>
-			<Text textAlign="center" fontSize={0.5} color="blue" text="Z" />
-		</Billboard>
-		-->
     </Canvas>
 </section>
 
