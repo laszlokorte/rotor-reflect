@@ -34,7 +34,7 @@
     let plane0 = $state({
         normal: norm({
             x: 2,
-            y: -3,
+            y: -1,
         }),
         distance: 0,
     });
@@ -477,6 +477,57 @@
         cy={v.y * -100 * (s !== false ? s : 1)}
         fill={defaultColor ?? v.color ?? "red"}
     />
+{/snippet}
+
+{#snippet ctrlPivot(p1, p2)}
+    {@const int = planeIntersection(p1, p2)}
+    {#if int}
+        <circle
+            r="20"
+            fill="black"
+            opacity="0.2"
+            cx={int.x * 100}
+            cy={-int.y * 100}
+            pointer-events="all"
+            onpointerdown={(evt) => {
+                if (evt.isPrimary) {
+                    evt.preventDefault();
+                    evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                    evt.currentTarget._offset = subtract(pos, scale(100, int));
+                }
+            }}
+            onpointermove={(evt) => {
+                if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                    evt.preventDefault();
+                    const pos = subtract(
+                        reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                        evt.currentTarget._offset,
+                    );
+
+                    const d1 = dot(p1.normal, pos);
+                    const d2 = dot(p2.normal, pos);
+                    if (d1 < 0) {
+                        p1.normal.x *= -1;
+                        p1.normal.y *= -1;
+                    }
+
+                    if (d2 < 0) {
+                        p2.normal.x *= -1;
+                        p2.normal.y *= -1;
+                    }
+                    p1.distance = Math.abs(d1 / 100);
+                    p2.distance = Math.abs(d2 / 100);
+                }
+            }}
+            role="button"
+            tabindex="-1"
+            onkeypress={(evt) => {
+                evt.preventDefault();
+            }}
+        ></circle>
+    {/if}
 {/snippet}
 {#snippet ctrlRad(circle, defaultColor = null, cls = null, forceCenter = null)}
     {@const center = forceCenter || circle.center}
@@ -1356,11 +1407,13 @@ const rotateHalf =
     </figure>
     <figure class="grid-item">
         <figcaption>
-            A {@render textLabel("subject", "subject (s)", "subject")} can be at the
-            plane {@render textLabel("plane", "plane (p)", "plane")} by taking the
-            component that points into the planes normal direction and adding it twice
-            to the subject by taking the component that points into the planes normal
-            direction and adding it twice to the subject.
+            A {@render textLabel("subject", "subject (s)", "subject")} can be {@render textLabel(
+                "reflected",
+                "reflected (r)",
+                "single",
+            )} at the plane {@render textLabel("plane", "plane (p)", "plane")} by
+            taking the component that points into the planes normal direction and
+            adding it twice to the subject.
         </figcaption>
         <svg
             class="canvas"
@@ -1403,8 +1456,11 @@ const rotateHalf =
     <p>
         We can now use two planes instead of two vectors to compose a rotation
         from two reflections. It works almost the same as before, except that by
-        moving the planes away from the origin we can even move the pivot of the
-        rotation.
+        moving the planes away from the origin we can even move the {@render textLabel(
+            "pivot",
+            "pivot (p)",
+            "pivot",
+        )} of the rotation. Try to drag the pivot around.
     </p>
 
     <fieldset>
@@ -1482,6 +1538,8 @@ const rotateHalf =
                     0,
                     "start",
                 )}
+
+                {@render ctrlPivot(plane, plane2)}
             {/if}
             {@render ctrl(subject, colors.subject)}
         </svg>
@@ -1606,7 +1664,28 @@ const rotateHalf =
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            <p>
+                Angle between {@render textLabel(
+                    "subject",
+                    "subject (s)",
+                    "subject",
+                )} the {@render textLabel(
+                    "rotated",
+                    "rotated result (t)",
+                    "rotated",
+                )}, measured at the {@render textLabel(
+                    "pivot",
+                    "pivot (p)",
+                    "pivot",
+                )}, can be seen to be twice the angle between the two reflector
+                planes.
+            </p>
+            <p>
+                If the {@render textLabel("pivot", "pivot (p)", "pivot")} is not at
+                the origin the dashed lines highlight the actual angles to look at.
+            </p>
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -1638,10 +1717,50 @@ const rotateHalf =
             {@render pln(plane2, colors.second)}
 
             {@render label(subject, "Subject (s)", colors.subject)}
+            {@render line(planeInter, subject, colors.subject, "dashed nodir")}
+            {@render line(
+                planeInter,
+                planeRotated,
+                colors.rotated,
+                "dashed nodir",
+            )}
+            {@render line(
+                planeInter,
+                planeReflected,
+                colors.reflected,
+                "dashed nodir",
+            )}
 
             {@render vec(subject, colors.subject)}
             {@render vec(planeReflected, colors.reflected)}
-
+            <g
+                transform="translate({planeInter.x * 100}, {planeInter.y *
+                    -100})"
+            >
+                {#if arcDirection(subtract(subject, planeInter), subtract(planeReflected, planeInter), subtract(planeRotated, planeInter))}
+                    {@render arc(
+                        subtract(subject, planeInter),
+                        subtract(planeReflected, planeInter),
+                        colors.angle_a,
+                    )}
+                    {@render arc(
+                        subtract(planeReflected, planeInter),
+                        subtract(planeRotated, planeInter),
+                        colors.angle_b,
+                    )}
+                {:else}
+                    {@render arc(
+                        subtract(planeRotated, planeInter),
+                        subtract(planeReflected, planeInter),
+                        colors.angle_b,
+                    )}
+                    {@render arc(
+                        subtract(planeReflected, planeInter),
+                        subtract(subject, planeInter),
+                        colors.angle_a,
+                    )}
+                {/if}</g
+            >
             {@render labelPlane(plane, "First reflector (u)", colors.first)}
             {@render labelPlane(plane2, "Second reflector (v)", colors.second)}
             {@render vec(planeRotated, colors.rotated)}
@@ -1671,7 +1790,10 @@ const rotateHalf =
                     0,
                     "start",
                 )}
+
+                {@render ctrlPivot(plane, plane2)}
             {/if}
+
             {@render ctrl(subject, colors.subject)}
         </svg>
     </figure>
