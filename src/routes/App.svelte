@@ -2905,11 +2905,11 @@ function circleProject(subject, circle) {
 }
 
 function circleReflect(subject, circle) {
-    const direction = subtract(subject, circle.center)
-    const dist_ratio = len(direction) / circle.radius
-    const dist_inv = 1 / dist_ratio
+  const direction = subtract(subject, circle.center)
+  const dist_ratio = len(direction) / circle.radius
+  const dist_inv = 1 / dist_ratio
 
-    return add(circle.center, scale(dist_inv * dist_inv, direction))
+  return add(circle.center, scale(dist_inv * dist_inv, direction))
 }
 `.trim()}</pre>
 </section>
