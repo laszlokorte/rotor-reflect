@@ -1608,15 +1608,15 @@ const rotateHalf = (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
             {@render label(plane0.normal, "Normal", colors.plane)}
             <text
                 opacity="0.4"
-                x={plane0.normal.x * 300}
-                y={-plane0.normal.y * 300}
+                x={plane0.normal.x * (3.5 + plane0.distance / 2) * 100}
+                y={-plane0.normal.y * (3.5 + plane0.distance / 2) * 100}
             >
                 Outside
             </text>
             <text
                 opacity="0.4"
-                x={-plane0.normal.x * 300}
-                y={plane0.normal.y * 300}
+                x={-plane0.normal.x * (3.5 - plane0.distance / 2) * 100}
+                y={plane0.normal.y * (3.5 - plane0.distance / 2) * 100}
             >
                 Inside
             </text>
