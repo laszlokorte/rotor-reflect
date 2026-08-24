@@ -1460,19 +1460,16 @@ const norm = (v) => scale(1 / len(v), v)
 const add = (u, v) => ({x: u.x + v.x, y: u.y + v.y})
 const subtract = (u, v) => add(u, scale(-1, v))
 
+// projection ~ component pointing into the same direction
 const project = (t, s) => scale(dot(t, s) / len2(s), s)
+// rejection ~ component pointing into the orthogonal direction
+const reject = (t, s) => subtract(s, project(t, s))
+// reflection ~ keeping the projection and reversing the rejection
+const reflect = (r,s) => subtract(project(t,s), reject(t, s))
 
-const reflect = (r,s) => {
-  const projected = project(s, r);
-  const reflected = subtract(scale(2, projected), s);
-  return reflected;
-}
+const rotate = (a, b, s) => reflect(b, reflect(a, s))
 
-const rotate =
-  (a, b, s) => reflect(b, reflect(a, s))
-
-const rotateHalf =
-  (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
+const rotateHalf = (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
         `.trim()}
     </pre>
 
@@ -1685,16 +1682,20 @@ const rotateHalf =
         the plane.
     </p>
     <pre>{`
+// rejection ~ component pointing away from the plane
 const planeReject = (subject, plane) => {
   const dist = dot(subject, plane.normal) - plane.distance;
   return scale(dist, plane.normal);
 }
 
-const planeReflect = (subject, plane) =>
-  add(subject, scale(-2, planeReject(subject, plane)))
-
+// projection ~ component inside the plane
 const planeProject = (subject, plane) =>
   subtract(subject, planeReject(subject, plane))
+
+// reflection ~ keeping the projection and reversing the rejection
+const planeReflect = (subject, plane) =>
+  subtract(planeProject(subject, plane), planeReject(subject, plane))
+
   `.trim()}</pre>
 </section>
 <section>
@@ -2589,7 +2590,7 @@ const planeProject = (subject, plane) =>
             {@render label(
                 circle2.center,
                 "Second Circular Reflector (v)",
-                colors.first,
+                colors.second,
                 "",
                 -circle2.radius * 3,
                 false,
@@ -2844,6 +2845,10 @@ const planeProject = (subject, plane) =>
 </div>
 <section>
     <h2>Implementation</h2>
+    <p>
+        Notice that the <code>circleReflect</code> is not a sum of a projection and
+        a rejection anymore.
+    </p>
     <pre>{`
 function circleProject(subject, circle) {
   const direction = subtract(subject, circle.center)
@@ -2861,6 +2866,70 @@ function circleReflect(subject, circle) {
     return add(circle.center, scale(dist_inv * dist_inv, direction))
 }
 `.trim()}</pre>
+</section>
+<section>
+    <h2>Fixed points</h2>
+    <p>
+        Go back and take a look at all the reflections we have constructed so
+        far. Now think about what are the fixed points are for each of them.
+        That is, for a given reflection what are the points will not move when
+        being reflected? Next determine the fixed points of a composition of
+        reflections.
+    </p>
+    <details>
+        <summary>Solution</summary>
+        <p>
+            When reflecting across a plane, the points inside the plane will not
+            move or in other words: The plane itself will not move.
+        </p>
+        <p>
+            When reflecting (inversing) across a circle, the points on the
+            circunference of the circle will not move.
+        </p>
+        <p>
+            More generally <em
+                >the reflector itself will not move during a single reflection</em
+            >.
+        </p>
+        <p>
+            When composing two flat plane reflections, only those points that
+            are both inside the first and inside the second plane will not move.
+            In other words: The intersection of two reflectors will not move.
+        </p>
+        <p>
+            When composing two circle reflections exactly those points that are
+            on both the first and the second circles circumference will not
+            move.
+        </p>
+        <p>
+            In case the circles <em>do not intersect</em> there are still two fixed
+            points for which the second reflection inverses the first reflection.
+        </p>
+        <p>
+            From this point of view we can come up with an peculiar insight:
+            Geometric objects like points, lines, planes, and circles can be
+            regarded as exactly the set of those points that do not move when
+            using the object as a reflector.
+        </p>
+        <p>
+            Intersections of two such objects <code>a</code> and <code>b</code>
+            can then be regarded exactly as those points that do not move when reflecting
+            first across object <code>a</code> and the reflecting across object
+            <code>b</code>.
+        </p>
+        <p>
+            This definitions will lead to two circles having always exactly two
+            intersections, even if the sum of their radii is smaller then this
+            distance between their centers.
+        </p>
+        <p>
+            When leaning into this perspective of geometry the geometric objects
+            stop being a set of points at all. Instead the object itself is the
+            ((composed) reflection) transformation. What we see/draw when
+            looking at/drawing a line or a circle are merely the fixed points of
+            the underlying transformation.
+        </p>
+    </details>
 </section>
 
 <footer>
@@ -3092,5 +3161,21 @@ function circleReflect(subject, circle) {
 
     .pivot-label {
         transform: translate(1ex, -1em);
+    }
+
+    details {
+        padding: 1ex;
+    }
+    details:open {
+        background-color: #f9f9f9;
+    }
+    details::details-content {
+        padding: 0 1em;
+    }
+    details > summary {
+        background-color: #111;
+        color: #fff;
+        padding: 1em;
+        cursor: pointer;
     }
 </style>
