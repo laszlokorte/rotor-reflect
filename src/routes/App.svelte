@@ -2312,14 +2312,16 @@ const planeReflect = (subject, plane) =>
     <h2>3 Dimensions with planes</h2>
     <p>
         Now we can take another look at 3-dimensional reflections and rotations.
-        Our reflectors are planes now. Below they are drawn as oriented circles
-        slicing the space like pizza rollers. The planes intersect in a line
-        that acts as the axis of rotation.
+        Our reflectors are planes now. Below they are drawn as oriented rings
+        spreading along the plane and slicing the space i half like a pizza
+        roller. The planes intersect in a line marked as rotor axis.
     </p>
     <p>
         Observe how the reflection on planes generalizes much better from 2d to
         3d, avoiding the zic-zac motion. This construction will now also work
-        for higher dimensions.
+        for higher dimensions. When turing the camera to look exactly into the
+        direction of the rotor axis the scene will look like our 2d rotation
+        from above.
     </p>
 </section>
 

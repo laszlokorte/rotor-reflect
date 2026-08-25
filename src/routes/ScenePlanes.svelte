@@ -162,7 +162,7 @@
                    vec2 p = vUv - 0.5;
                    float r = length(p) * 2.0; // 0 at center, 1 at corners
 
-                   float alpha = 1.0 - smoothstep(0.7, 1.0, r);
+                   float alpha = (1.0 - smoothstep(0.7, 1.0, r)) * (0.5 + 0.2 * sin(r*25.0));
 
                    gl_FragColor = vec4(color, alpha * 0.3);
                  }
@@ -216,7 +216,7 @@
                    vec2 p = vUv - 0.5;
                    float r = length(p) * 2.0; // 0 at center, 1 at corners
 
-                   float alpha = 1.0 - smoothstep(0.7, 1.0, r);
+                   float alpha = (1.0 - smoothstep(0.7, 1.0, r)) * (0.5 + 0.2 * sin(r*25.0));
 
                    gl_FragColor = vec4(color, alpha * 0.2);
                  }
