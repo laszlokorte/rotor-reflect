@@ -3,6 +3,7 @@
     import ScenePlanes from "./ScenePlanes.svelte";
     import fGrid from "./f_grid";
     import Highlight from "./Highlight.svelte";
+    import { jitteredGrid } from "./sampling";
 
     const favicon = "favicon.svg";
 
@@ -33,6 +34,7 @@
         y: 3,
     });
     let plane0 = $state({
+        dragging: false,
         normal: norm({
             x: 2,
             y: -1,
@@ -313,6 +315,23 @@
     function translate(t, v) {
         return add(v, scale(t.radiusA - t.radiusB, norm(t.center)));
     }
+
+    const pointSamples = jitteredGrid(20, 0.25);
+    const rainbow = (x, y) => {
+        const h = (Math.atan2(y, x) / (2 * Math.PI) + 1) % 1;
+        return `hsl(${h * 360} 100% 50%)`;
+    };
+    const adjustedPointSamples = $derived(
+        pointSamples.map((p) =>
+            add(
+                scale(plane0.distance, plane0.normal),
+                add(
+                    scale(p.x, plane0.normal),
+                    scale(p.y, { x: -plane0.normal.y, y: plane0.normal.x }),
+                ),
+            ),
+        ),
+    );
 </script>
 
 {#snippet vec(v, defaultColor = null, cls = null, stripe = [])}
@@ -527,6 +546,12 @@
                 v.x = clamped.x / 100;
                 v.y = clamped.y / 100;
             }
+        }}
+        ongotpointercapture={(evt) => {
+            v.dragging = true;
+        }}
+        onlostpointercapture={(evt) => {
+            v.dragging = false;
         }}
         role="button"
         tabindex="-1"
@@ -795,13 +820,19 @@
                     dot(scale(1 / 100, pos), norm(normal)) - plane.distance;
             }
         }}
+        ongotpointercapture={(evt) => {
+            plane.dragging = true;
+        }}
+        onlostpointercapture={(evt) => {
+            plane.dragging = false;
+        }}
         onpointermove={(evt) => {
             if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
                 evt.preventDefault();
                 const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
 
                 plane.distance = Math.min(
-                    5,
+                    4,
                     Math.max(
                         -0,
                         dot(norm(normal), scale(1 / 100, pos)) -
@@ -2950,16 +2981,7 @@ const planeReflect = (subject, plane) =>
                 stroke="#aaa"
                 stroke-dasharray="20 20"
             ></circle>
-            <mask id="far-mask">
-                <circle
-                    cx="0"
-                    cy="0"
-                    r="500"
-                    fill="white"
-                    stroke="#aaa"
-                    stroke-dasharray="20 20"
-                ></circle>
-            </mask>
+
             {@render vec(translate(trans, subject), colors.rotated)}
             {@render label(subject, "Subject (s)", colors.subject)}
             {@render label(
@@ -2974,7 +2996,7 @@ const planeReflect = (subject, plane) =>
             )}
 
             {@render vec(subject, colors.subject)}
-            <g mask="url(#far-mask)">
+            <g clip-path="url(#circle-clip)">
                 {@render ctrlTransRads(trans, [colors.first, colors.second])}
             </g>
 
@@ -3076,6 +3098,154 @@ function circleReflect(subject, circle) {
         </p>
     </details>
 </section>
+<section>
+    <h2>Vector fields</h2>
+    <p>
+        Until now we have looked at how a reflection affects a single vector and
+        how it affects a simple polygon, like the letter <em>F</em> used as chiral
+        figure.
+    </p>
+    <p>
+        To get an even better unterstanding of the effects of the transformation
+        we can try to take a look at all points at once and how they move unter
+        a transformation.
+    </p>
+    <p>
+        As looking at all infinite points at once might be difficult so we do
+        the next best thing and look at a random sample of points.
+    </p>
+    <p>
+        In the first figure you can see a simple plane as before together with a
+        few points sampled in the planes neighborhood. Each point is colored
+        according to its position to give each point a unique recognizable
+        label.
+    </p>
+    <p>
+        In the second figure you can each of those points, paired with their
+        resulting point after the reflection.
+    </p>
+</section>
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvas: true,
+                dragging: plane0.normal.dragging || plane0.dragging,
+                polarrainbow: true,
+            }}
+            style:background=""
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <g clip-path="url(#box-clip)">
+                {#each adjustedPointSamples.map( (p) => add(scale(plane0.distance, plane0.normal), p) ) as { x, y }}
+                    <circle
+                        cx={x * 100}
+                        cy={-y * 100}
+                        r="8"
+                        fill={rainbow(x, y)}
+                        stroke-opacity="1"
+                        stroke-width="4"
+                        stroke="white"
+                        class="slow"
+                    ></circle>
+                {/each}
+            </g>
+
+            <g clip-path="url(#box-clip)">
+                {@render ctrlPlane(plane0, colors.plane)}
+            </g>
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvas: true,
+                dragging: plane0.normal.dragging || plane0.dragging,
+                polarrainbow: true,
+            }}
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <g clip-path="url(#box-clip)">
+                {#each adjustedPointSamples as { x, y }}
+                    {@const reflected = planeReflect({ x, y }, plane0)}
+                    {@const reflectedDir = norm(subtract(reflected, { x, y }))}
+                    {@const tip = add({ x, y }, scale(0.2, reflectedDir))}
+                    {@const tail = subtract(
+                        reflected,
+                        scale(0.2, reflectedDir),
+                    )}
+                    {#if len({ x, y }) < 6 || len(reflected) < 6}
+                        <circle
+                            cx={x * 100}
+                            cy={-y * 100}
+                            r="8"
+                            stroke="none"
+                            fill={rainbow(x, y)}
+                            stroke-opacity="0.2"
+                            stroke-width="7"
+                            class="slow"
+                        ></circle>
+
+                        <circle
+                            cx={reflected.x * 100}
+                            cy={-reflected.y * 100}
+                            r="5"
+                            fill="none"
+                            stroke={rainbow(x, y)}
+                            stroke-width="3"
+                            class="slow"
+                        ></circle>
+                        <line
+                            x1={x * 100}
+                            y1={-y * 100}
+                            x2={reflected.x * 100}
+                            y2={-reflected.y * 100}
+                            stroke={rainbow(x, y)}
+                            opacity="0.1"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            class="slow"
+                        ></line>
+                        <line
+                            class="wiremove slow"
+                            x1={x * 100}
+                            y1={-y * 100}
+                            x2={reflected.x * 100}
+                            y2={-reflected.y * 100}
+                            stroke={rainbow(x, y)}
+                            opacity="0.4"
+                            stroke-width="10"
+                            stroke-linecap="round"
+                            style:--speed={-len(subtract({ x, y }, reflected)) *
+                                20}
+                            stroke-dasharray="0 {len(
+                                subtract({ x, y }, reflected),
+                            ) * 10}"
+                        ></line>
+                    {/if}
+                {/each}
+                {@render pln(plane0, colors.plane)}
+            </g>
+        </svg>
+    </figure>
+</div>
+<section>
+    <h2>To be continued</h2>
+
+    <p>This section is still to be written.</p>
+</section>
 
 <section>
     <h2>References</h2>
@@ -3112,10 +3282,45 @@ function circleReflect(subject, circle) {
         >
             <path d="M 10 5 l -10 5 l 3 -5 l -3 -5 z" />
         </marker>
+        <clipPath id="box-clip">
+            <rect x="-550" y="-550" width="1100" height="1100"></rect>
+        </clipPath>
+
+        <clipPath id="circle-clip">
+            <circle cx="0" cy="0" r="500"></circle>
+        </clipPath>
     </defs>
 </svg>
 
 <style>
+    .wiremove {
+        animation: wiremove 1s linear infinite;
+    }
+    .polarrainbow {
+        background-image: conic-gradient(
+            from 90deg,
+            #ff000033,
+            #ff00ff33,
+            #0000ff33,
+            #00ffff33,
+            #00ff0033,
+            #ffff0033,
+            #ff000033
+        );
+    }
+    .dragging .slow {
+        opacity: 0;
+        transition: opacity linear 0.1s;
+    }
+    .slow {
+        transition: opacity linear 0.2s;
+    }
+
+    @keyframes wiremove {
+        to {
+            stroke-dashoffset: var(--speed, -40);
+        }
+    }
     :global(body) {
         font-family: monospace, monospace;
     }
