@@ -96,6 +96,14 @@
     const circlePointsGeo = new THREE.BufferGeometry().setFromPoints(
         circlePoints,
     );
+
+    const colorFirst = new THREE.Color("black");
+    const colorSecond = new THREE.Color("black");
+
+    $effect(() => {
+        colorFirst.set(colors.first);
+        colorSecond.set(colors.second);
+    });
 </script>
 
 <section>
@@ -144,7 +152,7 @@
                 toneMapped={false}
                 side={THREE.DoubleSide}
                 uniforms={{
-                    color: { value: new THREE.Color(colors.first) },
+                    color: { value: colorFirst },
                 }}
                 vertexShader={`
                  varying vec2 vUv;
@@ -198,7 +206,7 @@
                 toneMapped={false}
                 side={THREE.DoubleSide}
                 uniforms={{
-                    color: { value: new THREE.Color(colors.second) },
+                    color: { value: colorSecond },
                 }}
                 vertexShader={`
                  varying vec2 vUv;
