@@ -27,12 +27,12 @@
     <!-- Shaft -->
     <T.Mesh position={[0, shaftLength / 2, 0]}>
         <T.CylinderGeometry args={[radius, radius, shaftLength, 16]} />
-        <T.MeshStandardMaterial {color} />
+        <T.MeshStandardMaterial toneMapped={false} {color} />
     </T.Mesh>
 
     <!-- Arrow head -->
     <T.Mesh position={[0, shaftLength + headLength / 2, 0]}>
         <T.ConeGeometry args={[headRadius, headLength, 16]} />
-        <T.MeshStandardMaterial {color} />
+        <T.MeshStandardMaterial toneMapped={false} {color} />
     </T.Mesh>
 </T.Group>

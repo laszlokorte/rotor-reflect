@@ -1,6 +1,7 @@
 <script>
     import { textureLoad } from "three/src/nodes/TSL.js";
     import Scene from "./Scene.svelte";
+    import ScenePlanes from "./ScenePlanes.svelte";
     import fGrid from "./f_grid";
 
     const favicon = "favicon.svg";
@@ -783,18 +784,20 @@
             distance: planes.distanceB,
         },
     )}
-    {@render line(
-        add(
-            scale(0.5, { x: -planes.normal.y, y: planes.normal.x }),
-            scale(planes.distanceA, planes.normal),
-        ),
-        add(
-            scale(0.5, { x: -planes.normal.y, y: planes.normal.x }),
-            scale(planes.distanceB, planes.normal),
-        ),
-        "black",
-        "dashed faded nodir",
-    )}
+    {#if det(normalA, normalB) == 0}
+        {@render line(
+            add(
+                scale(0.5, { x: -planes.normal.y, y: planes.normal.x }),
+                scale(planes.distanceA, planes.normal),
+            ),
+            add(
+                scale(0.5, { x: -planes.normal.y, y: planes.normal.x }),
+                scale(planes.distanceB, planes.normal),
+            ),
+            "black",
+            "dashed faded nodir",
+        )}
+    {/if}
     {#each ["distanceA", "distanceB"] as d, di}
         {@const normal = scale(
             1,
@@ -2303,6 +2306,26 @@ const planeReflect = (subject, plane) =>
 
             {@render ctrl(subject, colors.subject)}
         </svg>
+    </figure>
+</div>
+<section>
+    <h2>3 Dimensions with planes</h2>
+    <p>
+        Now we can take another look at 3-dimensional reflections and rotations.
+        Our reflectors are planes now. Below they are drawn as oriented circles
+        slicing the space like pizza rollers. The planes intersect in a line
+        that acts as the axis of rotation.
+    </p>
+    <p>
+        Observe how the reflection on planes generalizes much better from 2d to
+        3d, avoiding the zic-zac motion. This construction will now also work
+        for higher dimensions.
+    </p>
+</section>
+
+<div class="grid" style:background="none">
+    <figure class="grid-item">
+        <ScenePlanes {colors}></ScenePlanes>
     </figure>
 </div>
 <section>
