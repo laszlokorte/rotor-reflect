@@ -88,8 +88,8 @@
     const reflectionA = $derived(reflectPlane(firstPlaneNormal, vector));
     const reflectionB = $derived(reflectPlane(secondPlaneNormal, reflectionA));
 
-    const circlePoints = Array.from({ length: 65 }, (_, i) => {
-        const a = (i / 64) * Math.PI * 2;
+    const circlePoints = Array.from({ length: 5 }, (_, i) => {
+        const a = (i / 4 + 1 / 8) * Math.PI * 2;
         return new THREE.Vector3(Math.cos(a), Math.sin(a), 0);
     });
 
@@ -159,8 +159,8 @@
                  varying vec2 vUv;
 
                  void main() {
-                   vec2 p = vUv - 0.5;
-                   float r = length(p) * 2.0; // 0 at center, 1 at corners
+                   vec2 p = abs(vUv - 0.5);
+                   float r = max(p.x, p.y) * 2.0; // 0 at center, 1 at corners
 
                    float alpha = (1.0 - smoothstep(0.7, 1.0, r)) * (0.5 + 0.2 * sin(r*25.0));
 
@@ -170,20 +170,20 @@
             />
         </T.Mesh>
 
-        <T.Mesh quaternion={firstQuat.toArray()} scale={3.5}>
+        <T.Mesh quaternion={firstQuat.toArray()} scale={5}>
             <MeshLineGeometry points={circlePoints} />
             <MeshLineMaterial
-                width={0.04}
+                width={0.07}
                 toneMapped={false}
                 color={colors.first}
-                opacity={0.8}
+                opacity={0.9}
             />
         </T.Mesh>
 
-        <T.Mesh quaternion={secondQuat.toArray()} scale={3.5}>
+        <T.Mesh quaternion={secondQuat.toArray()} scale={5}>
             <MeshLineGeometry points={circlePoints} />
             <MeshLineMaterial
-                width={0.04}
+                width={0.07}
                 toneMapped={false}
                 color={colors.second}
                 opacity={0.9}
@@ -213,8 +213,8 @@
                  varying vec2 vUv;
 
                  void main() {
-                   vec2 p = vUv - 0.5;
-                   float r = length(p) * 2.0; // 0 at center, 1 at corners
+                   vec2 p = abs(vUv - 0.5);
+                   float r = max(p.x, p.y) * 2.0; // 0 at center, 1 at corners
 
                    float alpha = (1.0 - smoothstep(0.7, 1.0, r)) * (0.5 + 0.2 * sin(r*25.0));
 
@@ -391,5 +391,6 @@
         height: 50vh;
         display: grid;
         background-color: #fff;
+        user-select: none;
     }
 </style>

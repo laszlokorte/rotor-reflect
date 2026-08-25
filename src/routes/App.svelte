@@ -1,8 +1,8 @@
 <script>
-    import { textureLoad } from "three/src/nodes/TSL.js";
     import Scene from "./Scene.svelte";
     import ScenePlanes from "./ScenePlanes.svelte";
     import fGrid from "./f_grid";
+    import Highlight from "./Highlight.svelte";
 
     const favicon = "favicon.svg";
 
@@ -315,14 +315,28 @@
     }
 </script>
 
-{#snippet vec(v, defaultColor = null, cls = null)}
-    <path
-        class={[cls, "vector"]}
-        marker-end="url(#vector-head)"
-        vector-effect="non-scaling-stroke"
-        d="M 0,0 L {v.x * 100} {v.y * -100}"
-        stroke={defaultColor ?? v.color ?? "red"}
-    />
+{#snippet vec(v, defaultColor = null, cls = null, stripe = [])}
+    {#each stripe as str, si}
+        {@const l = len(v)}
+        {@const dash = ((l / stripe.length) * 100) / 5}
+        <path
+            class={[cls, "vector"]}
+            marker-end="url(#vector-head)"
+            vector-effect="non-scaling-stroke"
+            d="M 0,0 L {v.x * 100} {v.y * -100}"
+            stroke={str}
+            stroke-dasharray="{dash} {dash}"
+            stroke-dashoffset={dash * si}
+        />
+    {:else}
+        <path
+            class={[cls, "vector"]}
+            marker-end="url(#vector-head)"
+            vector-effect="non-scaling-stroke"
+            d="M 0,0 L {v.x * 100} {v.y * -100}"
+            stroke={defaultColor ?? v.color ?? "red"}
+        />
+    {/each}
 {/snippet}
 
 {#snippet line(u, v, defaultColor = null, cls = null)}
@@ -444,7 +458,45 @@
     <text class={["axis-label"]} x={30} y={-470} text-anchor="start"> Y </text>
 {/snippet}
 
-{#snippet ctrl(v, defaultColor = null, cls = null, s = false)}
+{#snippet ctrl(v, defaultColor = null, cls = null, s = false, stripe = [])}
+    {#each stripe as str, si}
+        {@const rad = 10}
+        {@const circ = Math.PI * 2 * rad}
+        {@const dash = circ / stripe.length / 2}
+        <circle
+            pointer-events="none"
+            class={[cls]}
+            r="10"
+            cx={v.x * 100 * (s !== false ? s : 1)}
+            cy={v.y * -100 * (s !== false ? s : 1)}
+            stroke={str}
+            fill="none"
+            opacity={0.5}
+            stroke-width="20"
+            stroke-dasharray="{dash} {dash}"
+            stroke-dashoffset={dash * si}
+        />
+    {:else}
+        <circle
+            pointer-events="none"
+            class={[cls]}
+            r="20"
+            opacity="0.3"
+            cx={v.x * 100 * (s !== false ? s : 1)}
+            cy={v.y * -100 * (s !== false ? s : 1)}
+            fill={defaultColor ?? v.color ?? "red"}
+        />
+    {/each}
+    <circle
+        pointer-events="none"
+        stroke="white"
+        class={[cls]}
+        r="10"
+        cx={v.x * 100 * (s !== false ? s : 1)}
+        cy={v.y * -100 * (s !== false ? s : 1)}
+        fill={defaultColor ?? v.color ?? "red"}
+    />
+
     <circle
         pointer-events="all"
         onpointerdown={(evt) => {
@@ -487,23 +539,6 @@
         cx={v.x * 100 * (s !== false ? s : 1)}
         cy={v.y * -100 * (s !== false ? s : 1)}
         fill="none"
-    />
-    <circle
-        pointer-events="none"
-        class={[cls]}
-        r="20"
-        opacity="0.3"
-        cx={v.x * 100 * (s !== false ? s : 1)}
-        cy={v.y * -100 * (s !== false ? s : 1)}
-        fill={defaultColor ?? v.color ?? "red"}
-    /><circle
-        pointer-events="none"
-        stroke="white"
-        class={[cls]}
-        r="10"
-        cx={v.x * 100 * (s !== false ? s : 1)}
-        cy={v.y * -100 * (s !== false ? s : 1)}
-        fill={defaultColor ?? v.color ?? "red"}
     />
 {/snippet}
 
@@ -563,6 +598,16 @@
     {@const v = add(center, { x: circle.radius, y: 0 })}
 
     <circle
+        r={circle.radius * 100 + 20}
+        cx={center.x * 100}
+        cy={center.y * -100}
+        fill="none"
+        stroke={defaultColor ?? v.color ?? "red"}
+        stroke-width="40"
+        stroke-opacity="0.1"
+        pointer-events="none"
+    />
+    <circle
         onpointerdown={(evt) => {
             if (evt.isPrimary) {
                 evt.preventDefault();
@@ -599,13 +644,12 @@
         }}
         class={[cls, "touch-point"]}
         cursor="move"
-        r={circle.radius * 100 + 20}
+        r={circle.radius * 100 + 40}
         cx={center.x * 100}
         cy={center.y * -100}
         fill="none"
-        stroke={defaultColor ?? v.color ?? "red"}
-        stroke-width="40"
-        stroke-opacity="0.1"
+        stroke={"transparent"}
+        stroke-width={80}
         pointer-events="stroke"
     />
 {/snippet}
@@ -641,6 +685,23 @@
             pointer-events="stroke"
         />
         <path
+            stroke-linecap="round"
+            class={[cls, "touch-point"]}
+            cursor="move"
+            d="M{center.x * (trans[rad] * 100) + center.y * 500}
+                             {center.y * -(trans[rad] * 100) + center.x * 500}
+                             Q
+                             {center.x * (trans[rad] * 100 - 80)}
+                             {center.y * -(trans[rad] * 100 - 80)}
+                             {center.x * (trans[rad] * 100) - center.y * 500}
+                             {center.y * -(trans[rad] * 100) - center.x * 500}"
+            fill="none"
+            stroke={defaultColors[i] ?? v.color ?? "red"}
+            stroke-width="40"
+            stroke-opacity="0.1"
+            pointer-events="none"
+        />
+        <path
             onpointerdown={(evt) => {
                 if (evt.isPrimary) {
                     evt.preventDefault();
@@ -674,17 +735,16 @@
             stroke-linecap="round"
             class={[cls, "touch-point"]}
             cursor="move"
-            d="M{center.x * (trans[rad] * 100) + center.y * 500}
-                     {center.y * -(trans[rad] * 100) + center.x * 500}
+            d="M{center.x * (trans[rad] * 100 - 20) + center.y * 500}
+                     {center.y * -(trans[rad] * 100 - 20) + center.x * 500}
                      Q
-                     {center.x * (trans[rad] * 100 - 80)}
-                     {center.y * -(trans[rad] * 100 - 80)}
-                     {center.x * (trans[rad] * 100) - center.y * 500}
-                     {center.y * -(trans[rad] * 100) - center.x * 500}"
+                     {center.x * (trans[rad] * 100 - 20 - 80)}
+                     {center.y * -(trans[rad] * 100 - 20 - 80)}
+                     {center.x * (trans[rad] * 100 - 20) - center.y * 500}
+                     {center.y * -(trans[rad] * 100 - 20) - center.x * 500}"
             fill="none"
-            stroke={defaultColors[i] ?? v.color ?? "red"}
-            stroke-width="40"
-            stroke-opacity="0.1"
+            stroke={"transparent"}
+            stroke-width={80}
             pointer-events="stroke"
         />
     {/each}
@@ -926,9 +986,13 @@
             }}
         ></circle>
     {/if}
-
-    {@render ctrl(planes.normal, defaultColors[0], "", 1)}
-    {@render vec(normalA, defaultColors[0] ?? "red")}
+    {#if det(normalA, normalB) == 0}
+        {@render ctrl(planes.normal, defaultColors[0], "", 1, defaultColors)}
+        {@render vec(normalA, defaultColors[0] ?? "red", null, defaultColors)}
+    {:else}
+        {@render ctrl(planes.normal, defaultColors[0], "", 1)}
+        {@render vec(normalA, defaultColors[0] ?? "red", null)}
+    {/if}
     {#if ts[0]}
         {@render vec(
             scale(Math.sign(planes.distanceB), normalB),
@@ -1466,7 +1530,8 @@
     </p>
 </section>
 
-<pre>{`
+<Highlight
+    code={`
 // dot ~ similarity in direction
 const dot = (a, b) => a.x * b.x + a.y * b.y
 // det ~ deviation in direction
@@ -1475,7 +1540,7 @@ const det = (u, v) =>  u.x * v.y - u.y * v.x
 const len2 = (v) => dot(v,v)
 const len = (v) => Math.sqrt(len2(v))
 
-const scale = (s,v) => ({x: s * v.x, y: s * v.y})
+const scale = (s, v) => ({x: s * v.x, y: s * v.y})
 const norm = (v) => scale(1 / len(v), v)
 
 const add = (u, v) => ({x: u.x + v.x, y: u.y + v.y})
@@ -1486,13 +1551,13 @@ const project = (t, s) => scale(dot(t, s) / len2(s), s)
 // rejection ~ component pointing into the orthogonal direction
 const reject = (t, s) => subtract(s, project(t, s))
 // reflection ~ keeping the projection and reversing the rejection
-const reflect = (r,s) => subtract(project(t,s), reject(t, s))
+const reflect = (r, s) => subtract(project(t, s), reject(t, s))
 
 const rotate = (a, b, s) => reflect(b, reflect(a, s))
 
 const rotateHalf = (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
         `.trim()}
-    </pre>
+/>
 
 <section>
     <h2>3 Dimensions</h2>
@@ -1702,7 +1767,8 @@ const rotateHalf = (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
         perpendicular component. Subtracting only once projects the vector onto
         the plane.
     </p>
-    <pre>{`
+    <Highlight
+        code={`
 // rejection ~ component pointing away from the plane
 const planeReject = (subject, plane) => {
   const dist = dot(subject, plane.normal) - plane.distance;
@@ -1716,8 +1782,8 @@ const planeProject = (subject, plane) =>
 // reflection ~ keeping the projection and reversing the rejection
 const planeReflect = (subject, plane) =>
   subtract(planeProject(subject, plane), planeReject(subject, plane))
-
-  `.trim()}</pre>
+`}
+    />
 </section>
 <section>
     <h2>Rotation with two planes</h2>
@@ -2312,9 +2378,9 @@ const planeReflect = (subject, plane) =>
     <h2>3 Dimensions with planes</h2>
     <p>
         Now we can take another look at 3-dimensional reflections and rotations.
-        Our reflectors are planes now. Below they are drawn as oriented rings
-        spreading along the plane and slicing the space i half like a pizza
-        roller. The planes intersect in a line marked as rotor axis.
+        Our reflectors are planes now. Below the planes are drawn as oriented
+        squares lying inside the plane, cutting the space in two parts like a
+        knife. The planes intersect each other in a line marked as rotor axis.
     </p>
     <p>
         Observe how the reflection on planes generalizes much better from 2d to
@@ -2532,8 +2598,8 @@ const planeReflect = (subject, plane) =>
                 false,
             )}
 
-            {@render ctrl(circle.center, colors.first)}
             {@render ctrlRad(circle, colors.first)}
+            {@render ctrl(circle.center, colors.first)}
         </svg>
     </figure>
     <figure class="grid-item">
@@ -2799,7 +2865,10 @@ const planeReflect = (subject, plane) =>
             {@render ctrlRad(circle2, colors.second, null, circle.center)}
 
             {@render ctrl(subject, colors.subject)}
-            {@render ctrl(circle.center, colors.first)}
+            {@render ctrl(circle.center, colors.first, [], false, [
+                colors.first,
+                colors.second,
+            ])}
         </svg>
     </figure>
     <figure class="grid-item">
@@ -2894,7 +2963,7 @@ const planeReflect = (subject, plane) =>
             {@render vec(translate(trans, subject), colors.rotated)}
             {@render label(subject, "Subject (s)", colors.subject)}
             {@render label(
-                scale(5, trans.center),
+                scale(5.3, trans.center),
                 "Far away centers (f)",
                 colors.first,
             )}
@@ -2910,7 +2979,10 @@ const planeReflect = (subject, plane) =>
             </g>
 
             {@render ctrl(subject, colors.subject)}
-            {@render ctrl(trans.center, colors.first, null, 5)}
+            {@render ctrl(trans.center, colors.first, null, 5, [
+                colors.first,
+                colors.second,
+            ])}
         </svg>
     </figure>
 </div>
@@ -2920,7 +2992,8 @@ const planeReflect = (subject, plane) =>
         Notice that the <code>circleReflect</code> is not a sum of a projection and
         a rejection anymore.
     </p>
-    <pre>{`
+    <Highlight
+        code={`
 function circleProject(subject, circle) {
   const direction = subtract(subject, circle.center)
   const dist_ratio = len(direction) / circle.radius
@@ -2936,7 +3009,8 @@ function circleReflect(subject, circle) {
 
   return add(circle.center, scale(dist_inv * dist_inv, direction))
 }
-`.trim()}</pre>
+`}
+    ></Highlight>
 </section>
 <section>
     <h2>Fixed points</h2>
@@ -3003,6 +3077,22 @@ function circleReflect(subject, circle) {
     </details>
 </section>
 
+<section>
+    <h2>References</h2>
+
+    <ul>
+        <li>
+            <a href="https://www.youtube.com/watch?v=q3as9SGmDdw"
+                >Talk: GAME26 Hamish Todd. Funhouse Mirrors.</a
+            >
+        </li>
+
+        <li>
+            <a href="https://bivector.net/">bivector.net</a>
+        </li>
+    </ul>
+</section>
+
 <footer>
     <a href="//tools.laszlokorte.de" target="_blank">More educational tools</a>
 </footer>
@@ -3026,21 +3116,6 @@ function circleReflect(subject, circle) {
 </svg>
 
 <style>
-    pre {
-        margin: 0;
-        padding: 1em;
-        box-sizing: border-box;
-        overflow: auto;
-        line-height: 1.5;
-        color: #fff;
-        background-color: #333;
-        font-size: 1em;
-
-        margin: 1em auto;
-        max-width: 120ch;
-        font-family: monospace, monospace;
-        box-sizing: border-box;
-    }
     :global(body) {
         font-family: monospace, monospace;
     }
