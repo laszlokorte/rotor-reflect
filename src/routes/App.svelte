@@ -114,8 +114,8 @@
 
     let trans = $state({
         center: norm({ x: 3, y: -1 }),
-        radiusA: 4,
-        radiusB: 2,
+        radiusA: 2,
+        radiusB: 4,
     });
 
     function circleReflect(circle, subject) {
@@ -155,6 +155,7 @@
     });
 
     let showChiral = $state(true);
+    let showMotion = $state(false);
 
     function dot(a, b) {
         return a.x * b.x + a.y * b.y;
@@ -313,7 +314,7 @@
     }
 
     function translate(t, v) {
-        return add(v, scale(t.radiusA - t.radiusB, norm(t.center)));
+        return add(v, scale(t.radiusB - t.radiusA, norm(t.center)));
     }
 
     const pointSamples = jitteredGrid(20, 0.25);
@@ -322,18 +323,62 @@
         return `hsl(${h * 360} 100% 50%)`;
     };
     const adjustedPointSamples = $derived(
-        pointSamples.map((p) =>
-            add(
-                scale(plane0.distance, plane0.normal),
-                add(
-                    scale(p.x, plane0.normal),
-                    scale(p.y, { x: -plane0.normal.y, y: plane0.normal.x }),
-                ),
-            ),
-        ),
+        plane0.dragging || plane0.normal.dragging
+            ? []
+            : pointSamples.map((p) =>
+                  add(
+                      scale(plane0.distance, plane0.normal),
+                      add(
+                          scale(p.x, plane0.normal),
+                          scale(p.y, {
+                              x: -plane0.normal.y,
+                              y: plane0.normal.x,
+                          }),
+                      ),
+                  ),
+              ),
     );
     const adjustedPointSamples2 = $derived(
-        pointSamples.map((p) => add(planeInter, p)),
+        plane.dragging ||
+            plane2.dragging ||
+            plane.normal.dragging ||
+            plane2.normal.dragging
+            ? []
+            : pointSamples.map((p) =>
+                  add(len(planeInter) < 10 ? planeInter : { x: 0, y: 0 }, p),
+              ),
+    );
+    const adjustedPointSamplesCircle = $derived(
+        circle.dragging || circle.center.dragging
+            ? []
+            : jitteredGrid(10, 0.25).map((p) =>
+                  add(circle.center, {
+                      x:
+                          (Math.cos(p.y * Math.PI * 2) -
+                              Math.sin(p.y * Math.PI * 2)) *
+                          (circle.radius + p.x / 10 - 0.2),
+                      y:
+                          (Math.sin(p.y * Math.PI * 2) +
+                              Math.cos(p.y * Math.PI * 2)) *
+                          (circle.radius + p.x / 10 - 0.2),
+                  }),
+              ),
+    );
+    const adjustedPointSamplesCircleScaling = $derived(
+        circle.dragging || circle2.dragging || circle.center.dragging
+            ? []
+            : jitteredGrid(10, 0.25).map((p) =>
+                  add(circle.center, {
+                      x:
+                          (Math.cos(p.y * Math.PI * 2) -
+                              Math.sin(p.y * Math.PI * 2)) *
+                          ((circle.radius + circle2.radius) / 2 + p.x / 10),
+                      y:
+                          (Math.sin(p.y * Math.PI * 2) +
+                              Math.cos(p.y * Math.PI * 2)) *
+                          ((circle.radius + circle2.radius) / 2 + p.x / 10),
+                  }),
+              ),
     );
 </script>
 
@@ -648,6 +693,12 @@
         pointer-events="none"
     />
     <circle
+        ongotpointercapture={(evt) => {
+            circle.dragging = true;
+        }}
+        onlostpointercapture={(evt) => {
+            circle.dragging = false;
+        }}
         onpointerdown={(evt) => {
             if (evt.isPrimary) {
                 evt.preventDefault();
@@ -695,12 +746,7 @@
 {/snippet}
 {#snippet ctrlTransRads(trans, defaultColors = [], cls = null)}
     {@const center = norm(trans.center)}
-    {@render line(
-        scale(trans.radiusB - 0.2, center),
-        scale(trans.radiusA - 0.2, center),
-        "black",
-        "dashed faded nodir",
-    )}
+
     {#each ["radiusA", "radiusB"] as rad, i}
         {@const v = add(center, { x: trans[rad], y: 0 })}
         <path
@@ -742,6 +788,12 @@
             pointer-events="none"
         />
         <path
+            ongotpointercapture={(evt) => {
+                trans.dragging = true;
+            }}
+            onlostpointercapture={(evt) => {
+                trans.dragging = false;
+            }}
             onpointerdown={(evt) => {
                 if (evt.isPrimary) {
                     evt.preventDefault();
@@ -1667,7 +1719,7 @@ const rotateHalf = (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
     </p>
     <p>
         But a <em>single reflection</em> on a <em>single</em> vector is not so well
-        defined in higher dimensions. Already in 3d a single reflection on vector
+        defined in higher dimensions. Already in 3D a single reflection on vector
         is hard to think of.
     </p>
     <p>
@@ -1699,12 +1751,12 @@ const rotateHalf = (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
         even in higher dimensions. This is what can be seen in the 3-dimensional
         example above.
     </p>
+    <h2>Planes reflectors</h2>
     <p>
-        But if we want to define a single kind of reflector to work an arbitrary
-        number of dimensions, we need another kind of geometric object. One that
-        uniquely divides the space into two sides. What we need is a <em
-            >plane</em
-        >
+        If we want to define a <em>single</em> kind of reflector to work an
+        arbitrary number of dimensions, we need another kind of geometric
+        object. One that uniquely divides the space into two sides. What we need
+        is a <em>plane</em>
         - more precisely, a <em>hyperplane</em> in higher dimensions.
     </p>
     <p>
@@ -1720,11 +1772,11 @@ const rotateHalf = (a, b, s) => rotate(scale(0.5, add(a, b)), b, s)
         by pointing in the direction perpendicular to the plane. The distance
         determines how far away the plane is from the origin.
     </p>
-    <h2>Reflecting at a plane</h2>
+    <h3>Reflecting at a plane</h3>
     <p>
-        We will rebuild our construction of composed reflections from before but
-        now using planes instead of vectors as reflectors. Lets first take a
-        look at the reflection on a single plane.
+        We will rebuild our construction of rotations from composed reflections
+        but now using planes in place of vectors as reflectors. Lets first take
+        a look at the reflection on a single plane.
     </p>
     <p>
         Notice that difference in orientation: Before we projected the {@render textLabel(
@@ -1862,8 +1914,8 @@ const planeReflect = (subject, plane) =>
     <p>
         For simple rotations composed of exactly two reflection this
         construction works just as good as before. But using planes as
-        reflectors allows for even more kinds of transformations to be
-        constructed through a composition of any number of single reflections.
+        reflectors and composing more than two of them allows for composing even
+        more kinds of transformations from.
     </p>
 
     <p>
@@ -1871,6 +1923,16 @@ const planeReflect = (subject, plane) =>
         the {@render textLabel("pivot", "pivot (p)", "pivot")} of the rotation. Try
         to drag the pivot around. This was not possible before with vectors as reflectors
         because the vectors could only present reflectors through the origin.
+    </p>
+    <p>
+        These constructions also work in higher dimensions. But not <em
+            >all possible rotations</em
+        >
+        in higher dimensions can be constructed from exactly
+        <em>two reflections</em>. In 4D, for example, a rotation can rotate in
+        <em>two planes at the same time</em>. Such a rotation requires four
+        reflector planes. In general, rotations in higher dimensions can be
+        constructed from an even number of reflector planes.
     </p>
 </section>
 
@@ -2129,50 +2191,59 @@ const planeReflect = (subject, plane) =>
             {@render pln(plane2, colors.second)}
 
             {@render label(subject, "Subject (s)", colors.subject)}
-            {@render line(planeInter, subject, colors.subject, "dashed nodir")}
-            {@render line(
-                planeInter,
-                planeRotated,
-                colors.rotated,
-                "dashed nodir",
-            )}
-            {@render line(
-                planeInter,
-                planeReflected,
-                colors.reflected,
-                "dashed nodir",
-            )}
-
             {@render vec(subject, colors.subject)}
             {@render vec(planeReflected, colors.reflected)}
-            <g
-                transform="translate({planeInter.x * 100}, {planeInter.y *
-                    -100})"
-            >
-                {#if arcDirection(subtract(subject, planeInter), subtract(planeReflected, planeInter), subtract(planeRotated, planeInter))}
-                    {@render arc(
-                        subtract(subject, planeInter),
-                        subtract(planeReflected, planeInter),
-                        colors.angle_a,
+            {#if len(planeInter) < 40}
+                <g clip-path="url(#box-clip)">
+                    {@render line(
+                        planeInter,
+                        subject,
+                        colors.subject,
+                        "dashed nodir",
                     )}
-                    {@render arc(
-                        subtract(planeReflected, planeInter),
-                        subtract(planeRotated, planeInter),
-                        colors.angle_b,
+                    {@render line(
+                        planeInter,
+                        planeRotated,
+                        colors.rotated,
+                        "dashed nodir",
                     )}
-                {:else}
-                    {@render arc(
-                        subtract(planeRotated, planeInter),
-                        subtract(planeReflected, planeInter),
-                        colors.angle_b,
+                    {@render line(
+                        planeInter,
+                        planeReflected,
+                        colors.reflected,
+                        "dashed nodir",
                     )}
-                    {@render arc(
-                        subtract(planeReflected, planeInter),
-                        subtract(subject, planeInter),
-                        colors.angle_a,
-                    )}
-                {/if}</g
-            >
+
+                    <g
+                        transform="translate({planeInter.x *
+                            100}, {planeInter.y * -100})"
+                    >
+                        {#if arcDirection(subtract(subject, planeInter), subtract(planeReflected, planeInter), subtract(planeRotated, planeInter))}
+                            {@render arc(
+                                subtract(subject, planeInter),
+                                subtract(planeReflected, planeInter),
+                                colors.angle_a,
+                            )}
+                            {@render arc(
+                                subtract(planeReflected, planeInter),
+                                subtract(planeRotated, planeInter),
+                                colors.angle_b,
+                            )}
+                        {:else}
+                            {@render arc(
+                                subtract(planeRotated, planeInter),
+                                subtract(planeReflected, planeInter),
+                                colors.angle_b,
+                            )}
+                            {@render arc(
+                                subtract(planeReflected, planeInter),
+                                subtract(subject, planeInter),
+                                colors.angle_a,
+                            )}
+                        {/if}</g
+                    >
+                </g>
+            {/if}
             {@render labelPlane(plane, "First reflector (u)", colors.first)}
             {@render labelPlane(plane2, "Second reflector (v)", colors.second)}
             {@render vec(planeRotated, colors.rotated)}
@@ -2462,9 +2533,9 @@ const planeReflect = (subject, plane) =>
     </p>
     <p>
         Observe how the reflection on planes generalizes the rotation much
-        better from 2d to 3d, avoiding the zic-zac motion caused by the vectors
+        better from 2D to 3D, avoiding the zic-zac motion caused by the vectors
         before. When turing the camera to look exactly into the direction of the
-        rotor axis the scene will look like our 2d rotation from above.
+        rotor axis the scene will look like our 2D rotation from above.
     </p>
 </section>
 
@@ -3050,6 +3121,12 @@ const planeReflect = (subject, plane) =>
             {@render vec(subject, colors.subject)}
             <g clip-path="url(#circle-clip)">
                 {@render ctrlTransRads(trans, [colors.first, colors.second])}
+                {@render line(
+                    scale(trans.radiusB - 0.2, trans.center),
+                    scale(trans.radiusA - 0.2, trans.center),
+                    "black",
+                    "dashed faded nodir",
+                )}
             </g>
 
             {@render ctrl(subject, colors.subject)}
@@ -3177,9 +3254,21 @@ function circleReflect(subject, circle) {
         resulting point after the reflection.
     </p>
 </section>
+<div class="options">
+    <fieldset>
+        <legend>Options</legend>
+        <label>
+            <input type="checkbox" bind:checked={showMotion} />
+            Animate Vector field motion
+        </label>
+    </fieldset>
+</div>
 <div class="grid">
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            As before we start with a single flat plane as reflector and select
+            some random points in the vicinity to work with.
+        </figcaption>
         <svg
             class={{
                 canvas: true,
@@ -3216,7 +3305,11 @@ function circleReflect(subject, circle) {
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            Each of the sample points gets reflected across the plane. An arrow
+            is drawn from the source location to the target location. We can
+            observe that all arrows are parallel.
+        </figcaption>
         <svg
             class={{
                 canvas: true,
@@ -3273,14 +3366,17 @@ function circleReflect(subject, circle) {
                             marker-end="url(#vector-head)"
                         ></line>
                         <line
-                            class="wiremove slow"
+                            class={{
+                                slow: true,
+                                wiremove: showMotion,
+                            }}
                             x1={x * 100}
                             y1={-y * 100}
                             x2={reflected.x * 100}
                             y2={-reflected.y * 100}
                             stroke={rainbow(x, y)}
                             opacity="0.4"
-                            stroke-width="10"
+                            stroke-width="0"
                             stroke-linecap="round"
                             style:--speed={-len(subtract({ x, y }, reflected)) *
                                 20}
@@ -3295,7 +3391,11 @@ function circleReflect(subject, circle) {
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            This time we compose two plane reflector to construct a rotation.
+            This time we choose the sample points to be near the planes
+            intersection.
+        </figcaption>
         <svg
             class={{
                 canvas: true,
@@ -3333,7 +3433,7 @@ function circleReflect(subject, circle) {
                 {@render ctrlPlane(plane, colors.first)}
                 {@render ctrlPlane(plane2, colors.second)}
 
-                {#if planeInter && len(planeInter) <= 6}
+                {#if planeInter && len(planeInter) <= 15}
                     <circle
                         cx={planeInter.x * 100}
                         cy={-planeInter.y * 100}
@@ -3361,7 +3461,10 @@ function circleReflect(subject, circle) {
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            Drawing arrows from original position of a samples to the target
+            position after two reflections shows the rotation motion.
+        </figcaption>
         <svg
             class={{
                 canvas: true,
@@ -3380,96 +3483,571 @@ function circleReflect(subject, circle) {
             {@render axis()}
 
             <g clip-path="url(#box-clip)">
-                {#if len(planeInter) > 20}
-                    <text text-anchor="middle">Pivot too far away</text>
-                {:else}
-                    {#each adjustedPointSamples2 as { x, y }}
-                        {@const reflected = planeReflect({ x, y }, plane)}
-                        {@const rotated = planeReflect(reflected, plane2)}
-                        {@const reflectedDir = norm(
-                            subtract(reflected, { x, y }),
+                {#each adjustedPointSamples2 as { x, y }}
+                    {@const reflected = planeReflect({ x, y }, plane)}
+                    {@const rotated = planeReflect(reflected, plane2)}
+                    {@const reflectedDir = norm(subtract(reflected, { x, y }))}
+                    {@const tip = add({ x, y }, scale(0.2, reflectedDir))}
+                    {@const tail = subtract(
+                        reflected,
+                        scale(0.2, reflectedDir),
+                    )}
+                    {#if len({ x, y }) < 6 || len(rotated) < 6}
+                        {@const radius = Math.hypot(
+                            x - planeInter.x,
+                            y - planeInter.y,
                         )}
-                        {@const tip = add({ x, y }, scale(0.2, reflectedDir))}
-                        {@const tail = subtract(
-                            reflected,
-                            scale(0.2, reflectedDir),
-                        )}
-                        {#if len({ x, y }) < 6 || len(rotated) < 6}
-                            {@const radius = Math.hypot(
-                                x - planeInter.x,
-                                y - planeInter.y,
-                            )}
-                            {@const ccw = 0 < det(plane.normal, plane2.normal)}
-                            {@const large =
-                                0 < dot(plane.normal, plane2.normal)}
-                            <circle
-                                cx={x * 100}
-                                cy={-y * 100}
-                                r="8"
-                                stroke="none"
-                                fill={rainbow(x, y)}
-                                stroke-opacity="0.2"
-                                stroke-width="7"
-                                class="slow"
-                            ></circle>
+                        {@const ccw = 0 < det(plane.normal, plane2.normal)}
+                        {@const large = 0 < dot(plane.normal, plane2.normal)}
+                        <circle
+                            cx={x * 100}
+                            cy={-y * 100}
+                            r="8"
+                            stroke="none"
+                            fill={rainbow(x, y)}
+                            stroke-opacity="0.2"
+                            stroke-width="7"
+                            class="slow"
+                        ></circle>
 
-                            <circle
-                                cx={rotated.x * 100}
-                                cy={-rotated.y * 100}
-                                r="5"
-                                fill="none"
-                                stroke={rainbow(x, y)}
-                                stroke-width="3"
-                                class="slow"
-                            ></circle>
-                            <path
-                                d="M{x * 100}
+                        <circle
+                            cx={rotated.x * 100}
+                            cy={-rotated.y * 100}
+                            r="5"
+                            fill="none"
+                            stroke={rainbow(x, y)}
+                            stroke-width="3"
+                            class="slow"
+                        ></circle>
+                        <path
+                            d="M{x * 100}
                             {-y * 100}
                             A{radius * 100}
                              {radius * 100}
                              0 {large ? 0 : 1} {ccw ? 0 : 1}
                              {rotated.x * 100}
                              {-rotated.y * 100}"
-                                stroke={rainbow(x, y)}
-                                opacity="0.1"
-                                stroke-width="5"
-                                stroke-linecap="round"
-                                class="slow"
-                                fill="none"
-                                marker-end="url(#vector-head)"
-                            ></path>
-                            <path
-                                class="wiremove slow"
-                                d="M{x * 100}
+                            stroke={rainbow(x, y)}
+                            opacity="0.1"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            class="slow"
+                            fill="none"
+                            marker-end="url(#vector-head)"
+                        ></path>
+                        <path
+                            class={{
+                                slow: true,
+                                wiremove: showMotion,
+                            }}
+                            d="M{x * 100}
                                                       {-y * 100}
                                                       A{radius * 100}
                                                        {radius * 100}
                                                        0 {large ? 0 : 1} {ccw
-                                    ? 0
-                                    : 1}
+                                ? 0
+                                : 1}
                                                        {rotated.x * 100}
                                                        {-rotated.y * 100}"
-                                stroke={rainbow(x, y)}
-                                opacity="0.4"
-                                stroke-width="10"
-                                stroke-linecap="round"
-                                style:--speed={-radius * 60}
-                                stroke-dasharray="0 {radius * 30}"
-                                fill="none"
-                            ></path>
-                        {/if}
-                    {/each}
-                {/if}
+                            stroke={rainbow(x, y)}
+                            opacity="0.4"
+                            stroke-width="0"
+                            stroke-linecap="round"
+                            style:--speed={-radius * 60}
+                            stroke-dasharray="0 {radius * 30}"
+                            fill="none"
+                        ></path>
+                    {/if}
+                {/each}
+                <circle
+                    cx={planeInter.x * 100}
+                    cy={-planeInter.y * 100}
+                    r="5"
+                    stroke="black"
+                    fill="white"
+                    stroke-width="4"
+                ></circle>
                 {@render pln(plane, colors.first)}
                 {@render pln(plane2, colors.second)}
             </g>
         </svg>
     </figure>
+    <figure class="grid-item">
+        <figcaption>
+            When using a circular reflector we can choose the sample point to be
+            distributed around the circumference.
+        </figcaption>
+        <svg
+            class={{
+                canvas: true,
+                dragging: circle.dragging || circle.center.dragging,
+                polarrainbow: true,
+            }}
+            style:background=""
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <g clip-path="url(#box-clip)">
+                {#each adjustedPointSamplesCircle.map( (p) => add(scale(plane.distance, plane.normal), p) ) as { x, y }}
+                    <circle
+                        cx={x * 100}
+                        cy={-y * 100}
+                        r="8"
+                        fill={rainbow(x, y)}
+                        stroke-opacity="1"
+                        stroke-width="4"
+                        stroke="white"
+                        class="slow"
+                    ></circle>
+                {/each}
+            </g>
+
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                stroke={colors.first}
+                fill="none"
+                r={circle.radius * 100}
+            ></circle>
+            {@render label(
+                circle.center,
+                "Circular Reflector (u)",
+                colors.first,
+                "",
+                circle.radius * 3,
+                false,
+            )}
+
+            {@render ctrlRad(circle, colors.first)}
+            {@render ctrl(circle.center, colors.first)}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            The arrows between source and target location emphasize how the
+            inside end outside of the circle is swapped. Some arrows point
+            outward, some arrows point inward to the circles center.
+        </figcaption>
+        <svg
+            class={{
+                canvas: true,
+                dragging: circle.dragging || circle.center.dragging,
+                polarrainbow: true,
+            }}
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                stroke={colors.first}
+                fill="none"
+                r={circle.radius * 100}
+            ></circle>
+
+            <g clip-path="url(#box-clip)">
+                {#each adjustedPointSamplesCircle as { x, y }}
+                    {@const reflected = circleReflect(circle, { x, y })}
+                    {@const reflectedDir = norm(subtract(reflected, { x, y }))}
+                    {#if len({ x, y }) < 6 || len(rotated) < 6}
+                        <circle
+                            cx={x * 100}
+                            cy={-y * 100}
+                            r="8"
+                            stroke="none"
+                            fill={rainbow(x, y)}
+                            stroke-opacity="0.2"
+                            stroke-width="7"
+                            class="slow"
+                        ></circle>
+
+                        <circle
+                            cx={reflected.x * 100}
+                            cy={-reflected.y * 100}
+                            r="5"
+                            fill="none"
+                            stroke={rainbow(x, y)}
+                            stroke-width="3"
+                            class="slow"
+                        ></circle>
+                        <path
+                            d="M{x * 100}
+                                {-y * 100}
+                                L
+                                 {reflected.x * 100}
+                                 {-reflected.y * 100}"
+                            stroke={rainbow(x, y)}
+                            opacity="0.1"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            class="slow"
+                            fill="none"
+                            marker-end="url(#vector-head)"
+                        ></path>
+                        <path
+                            class={{
+                                slow: true,
+                                wiremove: showMotion,
+                            }}
+                            d="M{x * 100}
+                                {-y * 100}
+                                L
+                                 {reflected.x * 100}
+                                 {-reflected.y * 100}"
+                            stroke={rainbow(x, y)}
+                            opacity="0.4"
+                            stroke-width="0"
+                            stroke-linecap="round"
+                            style:--speed={-len(reflectedDir) * 160}
+                            stroke-dasharray="0 {len(reflectedDir) * 80}"
+                            fill="none"
+                        ></path>
+                    {/if}
+                {/each}
+            </g>
+        </svg>
+    </figure>
+
+    <figure class="grid-item">
+        <figcaption>
+            When composing to circle reflections we choose the sample points to
+            somewhere around either of the circles.
+        </figcaption>
+        <svg
+            class={{
+                canvas: true,
+                dragging:
+                    circle.dragging ||
+                    circle.center.dragging ||
+                    circle2.dragging ||
+                    circle2.center.dragging,
+                polarrainbow: true,
+            }}
+            style:background=""
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <g clip-path="url(#box-clip)">
+                {#each adjustedPointSamplesCircleScaling.map( (p) => add(scale(plane.distance, plane.normal), p) ) as { x, y }}
+                    <circle
+                        cx={x * 100}
+                        cy={-y * 100}
+                        r="8"
+                        fill={rainbow(x, y)}
+                        stroke-opacity="1"
+                        stroke-width="4"
+                        stroke="white"
+                        class="slow"
+                    ></circle>
+                {/each}
+            </g>
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                fill="none"
+                fill-opacity="0.1"
+                stroke={colors.first}
+                r={circle.radius * 100}
+            ></circle>
+            <circle
+                cx={circle3.center.x * 100}
+                cy={-circle3.center.y * 100}
+                fill="none"
+                fill-opacity="0.1"
+                stroke={colors.second}
+                r={circle3.radius * 100}
+            ></circle>
+            {@render label(
+                circle.center,
+                "Circular Reflector (u)",
+                colors.first,
+                "",
+                -circle.radius * 3,
+                false,
+            )}
+            {@render label(
+                circle.center,
+                "Circular Reflector (u)",
+                colors.second,
+                "",
+                circle2.radius * 3,
+                false,
+            )}
+
+            {@render ctrlRad(circle, colors.first)}
+            {@render ctrlRad(circle2, colors.second, null, circle.center)}
+
+            {@render ctrl(circle.center, colors.first, [], false, [
+                colors.first,
+                colors.second,
+            ])}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            When connecting the source and target locations the expected scaling
+            transformation is confirmed by the arrow heads pointing <em>all</em> inward,
+            or all outwards, depending on the circles relative sizes.
+        </figcaption>
+        <svg
+            class={{
+                canvas: true,
+                dragging:
+                    circle.dragging ||
+                    circle.center.dragging ||
+                    circle2.dragging ||
+                    circle2.center.dragging,
+                polarrainbow: true,
+            }}
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                stroke={colors.first}
+                fill="none"
+                r={circle.radius * 100}
+            ></circle>
+            <circle
+                cx={circle.center.x * 100}
+                cy={-circle.center.y * 100}
+                stroke={colors.second}
+                fill="none"
+                r={circle2.radius * 100}
+            ></circle>
+
+            <g clip-path="url(#box-clip)">
+                {#each adjustedPointSamplesCircleScaling as { x, y }}
+                    {@const reflected = circleScale(
+                        circle,
+                        {
+                            center: circle.center,
+                            radius: circle2.radius,
+                        },
+                        { x, y },
+                    )}
+                    {@const reflectedDir = norm(subtract(reflected, { x, y }))}
+                    {#if len({ x, y }) < 6 || len(rotated) < 6}
+                        <circle
+                            cx={x * 100}
+                            cy={-y * 100}
+                            r="8"
+                            stroke="none"
+                            fill={rainbow(x, y)}
+                            stroke-opacity="0.2"
+                            stroke-width="7"
+                            class="slow"
+                        ></circle>
+
+                        <circle
+                            cx={reflected.x * 100}
+                            cy={-reflected.y * 100}
+                            r="5"
+                            fill="none"
+                            stroke={rainbow(x, y)}
+                            stroke-width="3"
+                            class="slow"
+                        ></circle>
+                        <path
+                            d="M{x * 100}
+                                   {-y * 100}
+                                   L
+                                    {reflected.x * 100}
+                                    {-reflected.y * 100}"
+                            stroke={rainbow(x, y)}
+                            opacity="0.1"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            class="slow"
+                            fill="none"
+                            marker-end="url(#vector-head)"
+                        ></path>
+                        <path
+                            class={{
+                                slow: true,
+                                wiremove: showMotion,
+                            }}
+                            d="M{x * 100}
+                                   {-y * 100}
+                                   L
+                                    {reflected.x * 100}
+                                    {-reflected.y * 100}"
+                            stroke={rainbow(x, y)}
+                            opacity="0.4"
+                            stroke-width="0"
+                            stroke-linecap="round"
+                            style:--speed={-len(reflectedDir) * 160}
+                            stroke-dasharray="0 {len(reflectedDir) * 80}"
+                            fill="none"
+                        ></path>
+                    {/if}
+                {/each}
+            </g>
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            To examine the translation we choose two far away circles again and
+            sample some points as the origin.
+        </figcaption>
+        <svg
+            class={{
+                canvas: true,
+                dragging: trans.dragging || trans.center.dragging,
+                polarrainbow: true,
+            }}
+            style:background=""
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <g clip-path="url(#circle-clip)">
+                {#each pointSamples.map( (p) => add(scale(plane.distance, plane.normal), p) ) as { x, y }}
+                    <circle
+                        cx={x * 100}
+                        cy={-y * 100}
+                        r="8"
+                        fill={rainbow(x, y)}
+                        stroke-opacity="1"
+                        stroke-width="4"
+                        stroke="white"
+                        class="slow"
+                    ></circle>
+                {/each}
+            </g>
+            <circle
+                cx="0"
+                cy="0"
+                r="500"
+                fill="none"
+                stroke="#aaa"
+                stroke-dasharray="20 20"
+            ></circle>
+
+            <g clip-path="url(#circle-clip)">
+                {@render ctrlTransRads(trans, [colors.first, colors.second])}
+            </g>
+            {@render label(
+                scale(5.3, trans.center),
+                "Far away centers (f)",
+                colors.first,
+            )}
+
+            {@render ctrl(trans.center, colors.first, null, 5, [
+                colors.first,
+                colors.second,
+            ])}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            As expected all the arrows are parallel pointing into the direction
+            of the two circles common far away center. The length of the arrows
+            corresponds to the ratio between the two circles radii.
+        </figcaption>
+        <svg
+            class={{
+                canvas: true,
+                dragging: trans.dragging || trans.center.dragging,
+                polarrainbow: true,
+            }}
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+
+            <g clip-path="url(#circle-clip)">
+                {#each pointSamples as { x, y }}
+                    {@const reflected = translate(trans, { x, y })}
+                    {@const reflectedDir = norm(subtract(reflected, { x, y }))}
+                    {#if len({ x, y }) < 6 || len(rotated) < 6}
+                        <circle
+                            cx={x * 100}
+                            cy={-y * 100}
+                            r="8"
+                            stroke="none"
+                            fill={rainbow(x, y)}
+                            stroke-opacity="0.2"
+                            stroke-width="7"
+                            class="slow"
+                        ></circle>
+
+                        <circle
+                            cx={reflected.x * 100}
+                            cy={-reflected.y * 100}
+                            r="5"
+                            fill="none"
+                            stroke={rainbow(x, y)}
+                            stroke-width="3"
+                            class="slow"
+                        ></circle>
+                        <path
+                            d="M{x * 100}
+                                   {-y * 100}
+                                   L
+                                    {reflected.x * 100}
+                                    {-reflected.y * 100}"
+                            stroke={rainbow(x, y)}
+                            opacity="0.1"
+                            stroke-width="5"
+                            stroke-linecap="round"
+                            class="slow"
+                            fill="none"
+                            marker-end="url(#vector-head)"
+                        ></path>
+                        <path
+                            class={{
+                                slow: true,
+                                wiremove: showMotion,
+                            }}
+                            d="M{x * 100}
+                                   {-y * 100}
+                                   L
+                                    {reflected.x * 100}
+                                    {-reflected.y * 100}"
+                            stroke={rainbow(x, y)}
+                            opacity="0.4"
+                            stroke-width="0"
+                            stroke-linecap="round"
+                            style:--speed={-len(reflectedDir) * 160}
+                            stroke-dasharray="0 {len(reflectedDir) * 80}"
+                            fill="none"
+                        ></path>
+                    {/if}
+                {/each}
+            </g>
+        </svg>
+    </figure>
 </div>
 <section>
-    <h2>To be continued</h2>
+    <h2>Transformations in <em>one</em> dimension</h2>
 
     <p>This section is still to be written.</p>
+    <p>
+        You can already think about how a reflection in 1D will look like, how
+        many fixed points there are and what other kind of transformations with
+        exactly the same fixed points you can come up with.
+    </p>
 </section>
 
 <section>
@@ -3520,25 +4098,26 @@ function circleReflect(subject, circle) {
 <style>
     .wiremove {
         animation: wiremove 1s linear infinite;
+        stroke-width: 10;
     }
     .polarrainbow {
         background-image: conic-gradient(
             from 90deg,
-            #ff000033,
-            #ff00ff33,
-            #0000ff33,
-            #00ffff33,
-            #00ff0033,
-            #ffff0033,
-            #ff000033
+            #ff000010,
+            #ff00ff10,
+            #0000ff10,
+            #00ffff10,
+            #00ff0010,
+            #ffff0010,
+            #ff000010
         );
     }
     .dragging .slow {
         opacity: 0;
-        transition: opacity linear 0.1s;
+        transition: none;
     }
     .slow {
-        transition: opacity linear 0.2s;
+        transition: opacity linear 0.5s;
     }
 
     @keyframes wiremove {
@@ -3566,7 +4145,7 @@ function circleReflect(subject, circle) {
         margin: auto;
         grid-template-columns: repeat(auto-fit, minmax(20em, 1fr));
     }
-    .grid-item:nth-child(3) {
+    .grid-item:nth-child(2n + 3) {
         grid-column: 1;
     }
     .grid-item {
@@ -3757,5 +4336,8 @@ function circleReflect(subject, circle) {
         color: #fff;
         padding: 1em;
         cursor: pointer;
+    }
+    p {
+        line-height: 1.6;
     }
 </style>
