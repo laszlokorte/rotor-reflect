@@ -499,6 +499,104 @@
         {t}
     </text>
 {/snippet}
+{#snippet numberline(width = 500)}
+    <line
+        marker-end="url(#vector-head)"
+        class="axis"
+        x1={-width + 50}
+        x2={width - 50}
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+        shape-rendering="crispEdges"
+    />
+    <line
+        class="axis"
+        y2="-15"
+        y1="15"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+        shape-rendering="crispEdges"
+    />
+    <line
+        class="axis"
+        x1={width - 60}
+        x2={width + 10}
+        stroke-dasharray="2 4"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+        shape-rendering="crispEdges"
+    />
+    <line
+        class="axis"
+        x1={-width + 60}
+        x2={-width - 10}
+        stroke-dasharray="2 4"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+        shape-rendering="crispEdges"
+    />
+    <text class={["axis-label"]} x={width} y={-10} text-anchor="middle">
+        ∞
+    </text>
+    <text class={["axis-label"]} x={-width} y={-10} text-anchor="middle">
+        -∞
+    </text>
+    <text class={["axis-label"]} x={0} y={50} text-anchor="middle"> 0 </text>
+{/snippet}
+{#snippet numberlineBend(width = 500)}
+    <path
+        marker-end="url(#vector-head)"
+        class="axis"
+        d="M {-width + 50} 0
+        Q 0 -50 {width - 50} 0"
+        fill="none"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+    />
+    <line
+        class="axis"
+        y2="-40"
+        y1="-10"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+        shape-rendering="crispEdges"
+    />
+    <line
+        class="axis"
+        x1={width - 60}
+        x2={width + 10}
+        y1={0}
+        y2={7}
+        stroke-dasharray="2 2"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+    />
+    <line
+        class="axis"
+        x1={-width + 60}
+        x2={-width - 10}
+        y1={0}
+        y2={7}
+        stroke-dasharray="2 2"
+        stroke="#333"
+        stroke-width="1"
+        vector-effect="non-scaling-stroke"
+    />
+    <text class={["axis-label"]} x={width} y={-10} text-anchor="middle">
+        ±∞
+    </text>
+    <text class={["axis-label"]} x={-width} y={-10} text-anchor="middle">
+        ±∞
+    </text>
+    <text class={["axis-label"]} x={0} y={30} text-anchor="middle"> 0 </text>
+{/snippet}
 
 {#snippet axis()}
     <line
@@ -750,13 +848,7 @@
     {#each ["radiusA", "radiusB"] as rad, i}
         {@const v = add(center, { x: trans[rad], y: 0 })}
         <path
-            role="button"
-            tabindex="-1"
-            onkeypress={(evt) => {
-                evt.preventDefault();
-            }}
             class={[cls, "touch-point"]}
-            cursor="move"
             d="M{center.x * (trans[rad] * 100 + 20) + center.y * 500}
             {center.y * -(trans[rad] * 100 + 20) + center.x * 500}
             Q
@@ -768,12 +860,11 @@
             stroke={defaultColors[i] ?? v.color ?? "red"}
             stroke-width="4"
             stroke-opacity="0.3"
-            pointer-events="stroke"
+            pointer-events="none"
         />
         <path
             stroke-linecap="round"
             class={[cls, "touch-point"]}
-            cursor="move"
             d="M{center.x * (trans[rad] * 100) + center.y * 500}
                              {center.y * -(trans[rad] * 100) + center.x * 500}
                              Q
@@ -846,13 +937,7 @@
     {@const off = scale(plane.distance, normal)}
     {@const v = add(normal, { x: plane.distance, y: 0 })}
     <path
-        role="button"
-        tabindex="-1"
-        onkeypress={(evt) => {
-            evt.preventDefault();
-        }}
         class={[cls, "touch-point"]}
-        cursor="move"
         d="M{normal.x * (plane.distance * 100) + normal.y * 500}
             {normal.y * -(plane.distance * 100) + normal.x * 500}
 
@@ -862,7 +947,7 @@
         stroke={defaultColor ?? "red"}
         stroke-width="4"
         stroke-opacity="0.3"
-        pointer-events="stroke"
+        pointer-events="none"
     />
     {@render vec(plane.normal, defaultColor)}
     <line
@@ -962,13 +1047,7 @@
             transform(norm(planes.normal), ts[di] ?? [1, 0, 0, 1]),
         )}
         <path
-            role="button"
-            tabindex="-1"
-            onkeypress={(evt) => {
-                evt.preventDefault();
-            }}
             class={[cls, "touch-point"]}
-            cursor="move"
             d="M{normal.x * (planes[d] * 100) + normal.y * 500}
             {normal.y * -(planes[d] * 100) + normal.x * 500}
 
@@ -978,7 +1057,7 @@
             stroke={defaultColors[di] ?? "red"}
             stroke-width="4"
             stroke-opacity="0.3"
-            pointer-events="stroke"
+            pointer-events="none"
         />
         <path
             onpointerdown={(evt) => {
@@ -1101,13 +1180,7 @@
 {#snippet pln(plane, defaultColor, cls = null)}
     {@const normal = norm(plane.normal)}
     <path
-        role="button"
-        tabindex="-1"
-        onkeypress={(evt) => {
-            evt.preventDefault();
-        }}
         class={[cls, "touch-point"]}
-        cursor="move"
         d="M{normal.x * (plane.distance * 100) + normal.y * 500}
             {normal.y * -(plane.distance * 100) + normal.x * 500}
 
@@ -1117,7 +1190,7 @@
         stroke={defaultColor ?? "red"}
         stroke-width="4"
         stroke-opacity="0.8"
-        pointer-events="stroke"
+        pointer-events="none"
     />
 {/snippet}
 
@@ -1144,7 +1217,7 @@
         stroke={defaultColor ?? v.color ?? "red"}
         stroke-opacity="0.2"
         stroke-width="6"
-        pointer-events="stroke">{t}</text
+        pointer-events="none">{t}</text
     >
     <text
         text-anchor={["start", "middle", "end"][
@@ -4049,7 +4122,207 @@ function circleReflect(subject, circle) {
         exactly the same fixed points you can come up with.
     </p>
 </section>
-
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvasflat: true,
+            }}
+            style:background=""
+            viewBox="-500 -100 1000 200"
+            width="200"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render numberline(500)}
+            <line
+                x1="100"
+                x2="510"
+                y1="0"
+                y2="0"
+                stroke="tomato"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1="100"
+                x2="-510"
+                y1="0"
+                y2="0"
+                stroke="teal"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <circle cx="100" cy="0" r="10"></circle>
+            <text font-size="smaller" y="-40" x="-300">Left Side</text>
+            <text font-size="smaller" y="-40" x="200">Right Side</text>
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvasflat: true,
+            }}
+            style:background=""
+            viewBox="-500 -100 1000 200"
+            width="200"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render numberline(500)}
+            <line
+                x1="100"
+                x2="300"
+                y1="0"
+                y2="0"
+                stroke="tomato"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1="300"
+                x2="510"
+                y1="0"
+                y2="0"
+                stroke="teal"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1="100"
+                x2="-510"
+                y1="0"
+                y2="0"
+                stroke="teal"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <circle cx="100" cy="0" r="10"></circle>
+            <circle cx="300" cy="0" r="10"></circle>
+            <text font-size="smaller" y="-40" x="-300">Out Side</text>
+            <text font-size="smaller" y="-40" x="340">Out Side</text>
+            <text font-size="smaller" y="-40" x="200" text-anchor="middle"
+                >In Side</text
+            >
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvasflat: true,
+            }}
+            style:background=""
+            viewBox="-500 -100 1000 200"
+            width="200"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render numberlineBend(500)}
+            <path
+                d="M100
+                -25
+                Q
+                300 -20
+                510 7"
+                stroke="tomato"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></path>
+            <path
+                d="M-510
+                              7
+                              Q
+                              -250 -30
+                              100 -25"
+                stroke="teal"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></path>
+            <circle cx="100" cy="-25" r="10"></circle>
+            <path d="M 510 -3 A 10 10 0 0 0 510 17"></path>
+            <path d="M -510 -3 A 10 10 0 0 1 -510 17"></path>
+            <path
+                fill="none"
+                stroke="black"
+                stroke-width="3"
+                d="M 510 -3 A 10 10 0 0 1 510 17"
+            ></path>
+            <path
+                fill="none"
+                stroke="black"
+                stroke-width="3"
+                d="M -510 -3 A 10 10 0 0 0 -510 17"
+            ></path>
+            <text font-size="smaller" y="-60" x="-300">In Side</text>
+            <text font-size="smaller" y="-60" x="200">Out Side</text>
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvasflat: true,
+            }}
+            style:background=""
+            viewBox="-500 -100 1000 200"
+            width="200"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render numberlineBend(500)}
+            <path
+                d="M100
+                           -25
+                           Q
+                           150 -25
+                           300 -13"
+                stroke="tomato"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></path>
+            <path
+                d="M300
+                                     -13
+                                     Q
+                                     400 -7
+                                     510 7"
+                stroke="teal"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></path>
+            <path
+                d="M-510
+                                         7
+                                         Q
+                                         -250 -30
+                                         100 -25"
+                stroke="teal"
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></path>
+            <circle cx="100" cy="-25" r="10"></circle>
+            <circle cx="300" cy="-15" r="10"></circle>
+            <text font-size="smaller" y="-60" x="-300">Out Side</text>
+            <text font-size="smaller" y="-60" x="340">Out Side</text>
+            <text font-size="smaller" y="-60" x="200" text-anchor="middle"
+                >In Side</text
+            >
+        </svg>
+    </figure>
+</div>
 <section>
     <h2>References</h2>
 
@@ -4174,6 +4447,22 @@ function circleReflect(subject, circle) {
 
     .canvas {
         aspect-ratio: 1 / 1;
+        position: relative;
+        user-select: none;
+        overflow: visible;
+        box-sizing: border-box;
+        padding: 1ex;
+        width: 100%;
+        height: auto;
+        display: block;
+        overflow: visible;
+        z-index: 100;
+        font-size: 2em;
+        touch-action: none;
+    }
+
+    .canvasflat {
+        aspect-ratio: 4 / 1;
         position: relative;
         user-select: none;
         overflow: visible;
