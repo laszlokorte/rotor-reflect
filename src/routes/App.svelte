@@ -3,7 +3,7 @@
     import ScenePlanes from "./ScenePlanes.svelte";
     import fGrid from "./f_grid";
     import Highlight from "./Highlight.svelte";
-    import { jitteredGrid } from "./sampling";
+    import { jitteredGrid, uniform1d } from "./sampling";
 
     const favicon = "favicon.svg";
 
@@ -72,6 +72,11 @@
         }),
         distanceA: 1,
         distanceB: 2,
+    });
+
+    let pointPair = $state({
+        a: 1,
+        b: 3,
     });
 
     function transform(v, t) {
@@ -317,10 +322,42 @@
         return add(v, scale(t.radiusB - t.radiusA, norm(t.center)));
     }
 
+    const samples1d = uniform1d(64, -4, 4);
+
     const pointSamples = jitteredGrid(20, 0.25);
     const rainbow = (x, y) => {
         const h = (Math.atan2(y, x) / (2 * Math.PI) + 1) % 1;
         return `hsl(${h * 360} 100% 50%)`;
+    };
+    const rainbow1d = (a, b) => {
+        const h = (a / b / 2 + 1) % 1;
+        return `hsl(${h * 360} 90% 50%)`;
+    };
+    const invert1D = (x, { a, b }) => {
+        const INF = 5;
+
+        const aInf = Math.abs(a) > INF;
+        const bInf = Math.abs(b) > INF;
+
+        // Both points are infinity: collapse toward ±infinity
+        if (aInf && bInf) {
+            return x < 0 ? -INF : INF;
+        }
+
+        // One point is infinity: ordinary reflection around the finite point
+        if (aInf || bInf) {
+            const center = aInf ? b : a;
+            return 2 * center - x;
+        }
+
+        // Ordinary 1D circle inversion
+        const center = (a + b) / 2;
+        const radius = Math.abs(b - a) / 2;
+
+        return Math.min(
+            4.75,
+            Math.max(-4.75, center + (radius * radius) / (x - center)),
+        );
     };
     const adjustedPointSamples = $derived(
         plane0.dragging || plane0.normal.dragging
@@ -499,7 +536,7 @@
         {t}
     </text>
 {/snippet}
-{#snippet numberline(width = 500)}
+{#snippet numberline(width = 500, cyclic = false)}
     <line
         marker-end="url(#vector-head)"
         class="axis"
@@ -539,12 +576,21 @@
         vector-effect="non-scaling-stroke"
         shape-rendering="crispEdges"
     />
-    <text class={["axis-label"]} x={width} y={-10} text-anchor="middle">
-        ∞
-    </text>
-    <text class={["axis-label"]} x={-width} y={-10} text-anchor="middle">
-        -∞
-    </text>
+    {#if cyclic}
+        <text class={["axis-label"]} x={width} y={-10} text-anchor="middle">
+            ±∞
+        </text>
+        <text class={["axis-label"]} x={-width} y={-10} text-anchor="middle">
+            ±∞
+        </text>
+    {:else}
+        <text class={["axis-label"]} x={width} y={-10} text-anchor="middle">
+            ∞
+        </text>
+        <text class={["axis-label"]} x={-width} y={-10} text-anchor="middle">
+            -∞
+        </text>
+    {/if}
     <text class={["axis-label"]} x={0} y={50} text-anchor="middle"> 0 </text>
 {/snippet}
 {#snippet numberlineBend(width = 500)}
@@ -4124,7 +4170,10 @@ function circleReflect(subject, circle) {
 </section>
 <div class="grid">
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            One obvious way to split one dimension into two connected regions is
+            use a point as the boundary between the left and the right side.
+        </figcaption>
         <svg
             class={{
                 canvasflat: true,
@@ -4162,7 +4211,11 @@ function circleReflect(subject, circle) {
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            The next obvious way is to use two points as boundary to split
+            between inside (between the points) or outside (left of the left, or
+            right of the right point).
+        </figcaption>
         <svg
             class={{
                 canvasflat: true,
@@ -4214,7 +4267,12 @@ function circleReflect(subject, circle) {
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            We can imagine the dimension to be slightly curved causing the
+            positive and negative infinities to meet and unify. This allows to
+            to think of the one-point-split to consist of actually two points as
+            well, with the other point being ant infinity.
+        </figcaption>
         <svg
             class={{
                 canvasflat: true,
@@ -4268,7 +4326,10 @@ function circleReflect(subject, circle) {
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            For the two finite boundary points unification of the infinities has
+            no effect.
+        </figcaption>
         <svg
             class={{
                 canvasflat: true,
@@ -4320,6 +4381,289 @@ function circleReflect(subject, circle) {
             <text font-size="smaller" y="-60" x="200" text-anchor="middle"
                 >In Side</text
             >
+        </svg>
+    </figure>
+</div>
+<section>
+    <p>
+        From now on we will not draw the number line curved anymore but still
+        imageing the positive and negative infinities to be unified.
+    </p>
+</section>
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvasmid: true,
+            }}
+            style:background=""
+            viewBox="-500 -275 1000 300"
+            width="200"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render numberline(500, true)}
+            <line
+                x1={Math.max(pointPair.b, pointPair.a) * 100}
+                x2="510"
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? "tomato" : "teal"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1={Math.min(pointPair.b, pointPair.a) * 100}
+                x2={Math.max(pointPair.b, pointPair.a) * 100}
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? "teal" : "tomato"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1="-510"
+                x2={Math.min(pointPair.b, pointPair.a) * 100}
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? "tomato" : "teal"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            {#each ["a", "b"] as k}
+                {#if Math.abs(pointPair[k]) < 5}
+                    <circle
+                        pointer-events="none"
+                        cx={pointPair[k] * 100}
+                        cy="0"
+                        r="10"
+                    ></circle>
+                {:else}
+                    <path
+                        fill="white"
+                        stroke="black"
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair[k]) *
+                            510} -10 a 10 10 0 0 {pointPair[k] > 0
+                            ? 1
+                            : 0} 0 20"
+                    ></path>
+                    <path
+                        fill="black"
+                        stroke="black"
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair[k]) *
+                            510} -10 a 10 10 0 0 {pointPair[k] > 0
+                            ? 0
+                            : 1} 0 20"
+                    ></path>
+                {/if}
+
+                <circle
+                    onpointerdown={(evt) => {
+                        if (evt.isPrimary) {
+                            evt.preventDefault();
+                            evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                            const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                            evt.currentTarget._offset = subtract(
+                                pos,
+                                scale(100, { x: pointPair[k], y: 0 }),
+                            );
+                        }
+                    }}
+                    onpointermove={(evt) => {
+                        if (
+                            evt.currentTarget.hasPointerCapture(evt.pointerId)
+                        ) {
+                            evt.preventDefault();
+                            const pos = subtract(
+                                reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                                evt.currentTarget._offset,
+                            );
+
+                            const clamped =
+                                Math.abs(pos.x) > 470
+                                    ? Math.sign(pos.x) * 510
+                                    : Math.sign(pos.x) *
+                                      Math.min(Math.abs(pos.x), 450);
+
+                            pointPair[k] = clamped / 100;
+                        }
+                    }}
+                    ongotpointercapture={(evt) => {
+                        pointPair.dragging = true;
+                    }}
+                    onlostpointercapture={(evt) => {
+                        pointPair.dragging = false;
+                    }}
+                    role="button"
+                    tabindex="-1"
+                    onkeypress={(evt) => {
+                        evt.preventDefault();
+                    }}
+                    class={["touch-point"]}
+                    cursor="move"
+                    opacity="0.3"
+                    cx={pointPair[k] * 100}
+                    cy="0"
+                    r="20"
+                ></circle>
+            {/each}
+            {#if Math.abs(pointPair.a) < 5 == Math.abs(pointPair.b) < 5}
+                <circle
+                    pointer-events="none"
+                    cx={((pointPair.a + pointPair.b) / 2) * 100}
+                    cy="0"
+                    r="4"
+                    opacity="0.5"
+                ></circle>
+                <text
+                    x={((pointPair.a + pointPair.b) / 2) * 100}
+                    y="-15"
+                    font-size="0.6em"
+                    opacity="0.5"
+                    text-anchor="middle"
+                >
+                    center
+                </text>
+            {/if}
+            <text
+                font-size="smaller"
+                y="-40"
+                text-anchor="middle"
+                x={((pointPair.a + pointPair.b) / 2) * 100}
+                >{pointPair.a < pointPair.b ? "Inside" : "Outside"}</text
+            >
+            {#if Math.abs(pointPair.a) < 5}
+                <text
+                    font-size="smaller"
+                    text-anchor="middle"
+                    y="-40"
+                    x={((pointPair.a +
+                        Math.sign(pointPair.a - pointPair.b) * 5) /
+                        2) *
+                        100}
+                    >{pointPair.a < pointPair.b ? "Outside" : "Inside"}</text
+                >
+            {/if}
+            {#if Math.abs(pointPair.b) < 5}
+                <text
+                    font-size="smaller"
+                    text-anchor="middle"
+                    y="-40"
+                    x={((pointPair.b +
+                        Math.sign(pointPair.b - pointPair.a) * 5) /
+                        2) *
+                        100}
+                    >{pointPair.a < pointPair.b ? "Outside" : "Inside"}</text
+                >
+            {/if}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvasmid: true,
+            }}
+            style:background=""
+            viewBox="-500 -275 1000 300"
+            width="200"
+            height="200"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render numberline(500, true)}
+            <line
+                x1={Math.max(pointPair.b, pointPair.a) * 100}
+                x2="510"
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? "tomato" : "teal"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1={Math.min(pointPair.b, pointPair.a) * 100}
+                x2={Math.max(pointPair.b, pointPair.a) * 100}
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? "teal" : "tomato"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1="-510"
+                x2={Math.min(pointPair.b, pointPair.a) * 100}
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? "tomato" : "teal"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            {#each samples1d as s}
+                {@const i = invert1D(s, pointPair)}
+                <circle
+                    fill={rainbow1d(s, 5)}
+                    pointer-events="none"
+                    cx={s * 100}
+                    stroke="white"
+                    cy="0"
+                    r="5"
+                ></circle>
+                <circle
+                    stroke={rainbow1d(s, 5)}
+                    pointer-events="none"
+                    cx={i * 100}
+                    fill="white"
+                    cy="0"
+                    r="5"
+                ></circle>
+                <path
+                    fill="none"
+                    d="M {s * 100} 0 A {Math.abs(i - s) * 50} {Math.abs(i - s) *
+                        50} 0 0 {i > s ? 1 : 0} {i * 100} 0"
+                    stroke={rainbow1d(s, 5)}
+                    marker-end="url(#vector-head)"
+                />
+            {/each}
+
+            {#each ["a", "b"] as k}
+                {#if Math.abs(pointPair[k]) < 5}
+                    <circle
+                        pointer-events="none"
+                        cx={pointPair[k] * 100}
+                        cy="0"
+                        r="10"
+                    ></circle>
+                {:else}
+                    <path
+                        fill="white"
+                        stroke="black"
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair[k]) *
+                            510} -10 a 10 10 0 0 {pointPair[k] > 0
+                            ? 1
+                            : 0} 0 20"
+                    ></path>
+                    <path
+                        fill="black"
+                        stroke="black"
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair[k]) *
+                            510} -10 a 10 10 0 0 {pointPair[k] > 0
+                            ? 0
+                            : 1} 0 20"
+                    ></path>
+                {/if}
+            {/each}
         </svg>
     </figure>
 </div>
@@ -4465,7 +4809,6 @@ function circleReflect(subject, circle) {
         aspect-ratio: 4 / 1;
         position: relative;
         user-select: none;
-        overflow: visible;
         box-sizing: border-box;
         padding: 1ex;
         width: 100%;
@@ -4476,7 +4819,20 @@ function circleReflect(subject, circle) {
         font-size: 2em;
         touch-action: none;
     }
-
+    .canvasmid {
+        aspect-ratio: 3 / 1;
+        position: relative;
+        user-select: none;
+        overflow: hidden;
+        box-sizing: border-box;
+        padding: 1ex;
+        width: 100%;
+        height: auto;
+        display: block;
+        z-index: 100;
+        font-size: 2em;
+        touch-action: none;
+    }
     .vector {
         stroke-width: 2px;
         stroke-linecap: round;

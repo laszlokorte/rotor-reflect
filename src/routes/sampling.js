@@ -11,3 +11,6 @@ export const jitteredGrid = (n = 20, jitter = 0.3) => {
     };
   });
 };
+
+export const uniform1d = (n, a, b) =>
+  Array.from({ length: n }, () => a + Math.random() * (b - a));
