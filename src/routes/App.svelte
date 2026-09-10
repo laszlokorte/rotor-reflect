@@ -22,6 +22,7 @@
         plane: "purple",
         single: "darkorange",
         pivot: "black",
+        gauge: "magenta",
     });
 
     let reflector = $state({
@@ -65,6 +66,21 @@
         distanceA: 0.5,
         distanceB: 0.5,
     });
+    const planesOrthoInter = $derived(
+        planeIntersection(
+            {
+                normal: planesOrtho.normal,
+                distance: planesOrtho.distanceA,
+            },
+            {
+                normal: {
+                    x: -planesOrtho.normal.y,
+                    y: planesOrtho.normal.x,
+                },
+                distance: planesOrtho.distanceB,
+            },
+        ),
+    );
     let planesParallel = $state({
         normal: norm({
             x: 3,
@@ -75,6 +91,10 @@
     });
 
     let pointPair = $state({
+        a: 1,
+        b: 3,
+    });
+    let pointPair2 = $state({
         a: 1,
         b: 3,
     });
@@ -269,6 +289,11 @@
     let planeProjected = $derived(planeProject(subject, plane));
     let planeProjected2 = $derived(planeProject(planeReflected, plane2));
     let planeRotated = $derived(planeReflect(planeReflected, plane2));
+
+    function clamp(min, max, v) {
+        return Math.min(max, Math.max(min, v));
+    }
+
     const evtToSvg = (evt) => {
         const svg = evt.currentTarget.ownerSVGElement;
         const svgPoint = svg.createSVGPoint();
@@ -334,14 +359,12 @@
         return `hsl(${h * 360} 90% 50%)`;
     };
     const invert1D = (x, { a, b }) => {
-        const INF = 5;
-
-        const aInf = Math.abs(a) > INF;
-        const bInf = Math.abs(b) > INF;
+        const aInf = !isFinite(a);
+        const bInf = !isFinite(b);
 
         // Both points are infinity: collapse toward ±infinity
         if (aInf && bInf) {
-            return x < 0 ? -INF : INF;
+            return x < 0 ? -Infinity : Infinity;
         }
 
         // One point is infinity: ordinary reflection around the finite point
@@ -354,10 +377,7 @@
         const center = (a + b) / 2;
         const radius = Math.abs(b - a) / 2;
 
-        return Math.min(
-            4.75,
-            Math.max(-4.75, center + (radius * radius) / (x - center)),
-        );
+        return center + (radius * radius) / (x - center);
     };
     const adjustedPointSamples = $derived(
         plane0.dragging || plane0.normal.dragging
@@ -949,7 +969,7 @@
                     trans[rad] = Math.min(
                         5,
                         Math.max(
-                            -4,
+                            -5,
                             dot(norm(center), scale(1 / 100, pos)) -
                                 evt.currentTarget._offset,
                         ),
@@ -1032,11 +1052,16 @@
                 plane.distance = Math.min(
                     4,
                     Math.max(
-                        -0,
+                        -4,
                         dot(norm(normal), scale(1 / 100, pos)) -
                             evt.currentTarget._offset,
                     ),
                 );
+                if (plane.distance < 0) {
+                    plane.distance;
+                    plane.normal = scale(-1, plane.normal);
+                    evt.currentTarget._offset *= -1;
+                }
             }
         }}
         role="button"
@@ -1086,12 +1111,72 @@
             "black",
             "dashed faded nodir",
         )}
+        {#if Math.sign(planes.distanceA) != Math.sign(planes.distanceB)}
+            {@render line(
+                { x: 0, y: 0 },
+                scale(planes.distanceA, planes.normal),
+                defaultColors[0] ?? "black",
+                "dashed faded nodir",
+            )}
+            {@render line(
+                { x: 0, y: 0 },
+                scale(planes.distanceB, planes.normal),
+                defaultColors[1] ?? "black",
+                "dashed faded nodir",
+            )}
+        {:else if Math.abs(planes.distanceA) < Math.abs(planes.distanceB)}
+            {@render line(
+                { x: 0, y: 0 },
+                scale(planes.distanceA, planes.normal),
+                defaultColors[0] ?? "black",
+                "dashed faded nodir",
+            )}
+            {@render line(
+                scale(planes.distanceA, planes.normal),
+                scale(planes.distanceB, planes.normal),
+                defaultColors[1] ?? "black",
+                "dashed faded nodir",
+            )}
+        {:else}
+            {@render line(
+                { x: 0, y: 0 },
+                scale(planes.distanceB, planes.normal),
+                defaultColors[1] ?? "black",
+                "dashed faded nodir",
+            )}
+            {@render line(
+                scale(planes.distanceA, planes.normal),
+                scale(planes.distanceB, planes.normal),
+                defaultColors[0] ?? "black",
+                "dashed faded nodir",
+            )}
+        {/if}
+    {:else}
+        {#each ["distanceA", "distanceB"] as d, di}
+            {@const normal = scale(
+                1,
+                transform(norm(planes.normal), ts[di] ?? [1, 0, 0, 1]),
+            )}
+            {@const off = scale(planes[d], normal)}
+            <line
+                stroke-linecap="round"
+                opacity="0.5"
+                x1={0}
+                y1={0}
+                x2={off.x * 100}
+                y2={-off.y * 100}
+                stroke-width="5"
+                stroke-dasharray=" 10 10 5 10"
+                stroke={defaultColors[di]}
+            />
+        {/each}
     {/if}
     {#each ["distanceA", "distanceB"] as d, di}
         {@const normal = scale(
             1,
             transform(norm(planes.normal), ts[di] ?? [1, 0, 0, 1]),
         )}
+
         <path
             class={[cls, "touch-point"]}
             d="M{normal.x * (planes[d] * 100) + normal.y * 500}
@@ -1124,7 +1209,7 @@
                     planes[d] = Math.min(
                         5,
                         Math.max(
-                            -0,
+                            -5,
                             dot(norm(normal), scale(1 / 100, pos)) -
                                 evt.currentTarget._offset,
                         ),
@@ -1154,6 +1239,14 @@
             pointer-events="stroke"
         />
     {/each}
+
+    {#if det(normalA, normalB) == 0}
+        {@render ctrl(planes.normal, defaultColors[0], "", 1, defaultColors)}
+        {@render vec(normalA, defaultColors[0] ?? "red", null, defaultColors)}
+    {:else}
+        {@render ctrl(planes.normal, defaultColors[0], "", 1)}
+        {@render vec(normalA, defaultColors[0] ?? "red", null)}
+    {/if}
     {#if int}
         <circle
             cx={int.x * 100}
@@ -1208,13 +1301,6 @@
                 evt.preventDefault();
             }}
         ></circle>
-    {/if}
-    {#if det(normalA, normalB) == 0}
-        {@render ctrl(planes.normal, defaultColors[0], "", 1, defaultColors)}
-        {@render vec(normalA, defaultColors[0] ?? "red", null, defaultColors)}
-    {:else}
-        {@render ctrl(planes.normal, defaultColors[0], "", 1)}
-        {@render vec(normalA, defaultColors[0] ?? "red", null)}
     {/if}
     {#if ts[0]}
         {@render vec(
@@ -3347,6 +3433,675 @@ function circleReflect(subject, circle) {
     </details>
 </section>
 <section>
+    <h2>Gauging</h2>
+    <p>
+        When composing two reflectors you will notice that only there relative
+        orientation to each other matters. Two perpendicular reflectors
+        intersecting in a point will cause a point reflection in that point now
+        matter how they are oriented with respect to the world.
+    </p>
+    <p>
+        Two parallel reflectors will cause a translation by twice there distance
+        in their common normal direction, no matter how far from the origin they
+        are positioned.
+    </p>
+    <p>
+        Two reflectors intersecting in a point will cause a rotation around this
+        point by twice the realtive angle between them, no matter what their
+        absolute orientation is.
+    </p>
+    <p>
+        Changing the absolute orientation or position of a pair of reflectors
+        without effecting their combined effect is called gauging.
+    </p>
+    <p>
+        You are already familiar with this when you thing about combining two
+        natural numbers: <code>7 - 3 = 4</code>, but also
+        <code>6 - 2 = 4</code>. Subtraction is a combination of two numbers and
+        as long both numbers are changed in the same way, the overall result
+        does not change. With ratios this is even more familiar:
+        <code>8 / 4 = 2</code>, but also <code>4 / 2 = 2</code>. When
+        calculating with fractions it is a very common technique to adjust the
+        denominator of a fraction without changing resulting value of a number.
+    </p>
+    <p>
+        Below you can drag the gauge handle to modify the reflector pairs
+        without modifying their combined result.
+    </p>
+</section>
+<div class="grid">
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+
+                {@render chiral(
+                    planeReflect(
+                        planeReflect(subject, {
+                            normal: planesOrtho.normal,
+                            distance: planesOrtho.distanceA,
+                        }),
+                        {
+                            normal: {
+                                x: -planesOrtho.normal.y,
+                                y: planesOrtho.normal.x,
+                            },
+                            distance: planesOrtho.distanceB,
+                        },
+                    ),
+                    colors.rotated,
+                    `${reflectionPlaneMatrix({
+                        normal: {
+                            x: -planesOrtho.normal.y,
+                            y: planesOrtho.normal.x,
+                        },
+                        distance: planesOrtho.distanceB,
+                    })} ${reflectionPlaneMatrix({
+                        normal: planesOrtho.normal,
+                        distance: planesOrtho.distanceA,
+                    })}`,
+                )}
+            {/if}
+
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
+
+            {@render vec(
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesOrtho.normal,
+                        distance: planesOrtho.distanceA,
+                    }),
+                    {
+                        normal: {
+                            x: -planesOrtho.normal.y,
+                            y: planesOrtho.normal.x,
+                        },
+                        distance: planesOrtho.distanceB,
+                    },
+                ),
+                colors.rotated,
+            )}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+
+            {@render label(
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesOrtho.normal,
+                        distance: planesOrtho.distanceA,
+                    }),
+                    {
+                        normal: {
+                            x: -planesOrtho.normal.y,
+                            y: planesOrtho.normal.x,
+                        },
+                        distance: planesOrtho.distanceB,
+                    },
+                ),
+                "Point Reflected (t)",
+                colors.rotated,
+            )}
+
+            <g clip-path="url(#box-clip)">
+                <circle
+                    cx={planesOrthoInter.x * 100}
+                    cy={-planesOrthoInter.y * 100}
+                    r={150}
+                    opacity={0.1}
+                    fill={colors.gauge}
+                />
+                <circle
+                    id="circle-gauge-text-1"
+                    transform="rotate({Math.sign(planesOrtho.distanceA) *
+                        ((Math.atan2(
+                            -planesOrtho.normal.y,
+                            planesOrtho.normal.x,
+                        ) -
+                            Math.atan2(
+                                planesOrtho.normal.x,
+                                -planesOrtho.normal.y,
+                            )) /
+                            Math.PI /
+                            2) *
+                        180})"
+                    transform-origin="{planesOrthoInter.x *
+                        100} {-planesOrthoInter.y * 100}"
+                    cx={planesOrthoInter.x * 100}
+                    cy={-planesOrthoInter.y * 100}
+                    r={160}
+                    stroke-width="40"
+                    opacity={0.4}
+                    fill="none"
+                    pointer-events="stroke"
+                    cursor="move"
+                    stroke={colors.gauge}
+                    role="button"
+                    tabindex="-1"
+                    onkeydown={(evt) => {}}
+                    onpointerdown={(evt) => {
+                        if (evt.isPrimary) {
+                            evt.preventDefault();
+                            evt.currentTarget.setPointerCapture(evt.pointerId);
+                            const pos = scale(
+                                0.01,
+                                reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                            );
+                            evt.currentTarget._offset = pos;
+                        }
+                    }}
+                    onpointermove={(evt) => {
+                        if (
+                            evt.currentTarget.hasPointerCapture(evt.pointerId)
+                        ) {
+                            const pos = scale(
+                                0.01,
+                                reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                            );
+                            const a = subtract(
+                                evt.currentTarget._offset,
+                                planesOrthoInter,
+                            );
+                            const b = subtract(pos, planesOrthoInter);
+
+                            const damp = Math.min(1, len2(b));
+                            const normalNew = rotateHalf(
+                                a,
+                                add(scale(1 - damp, a), scale(damp, b)),
+                                planesOrtho.normal,
+                            );
+                            const distanceANew = dot(
+                                normalNew,
+                                planesOrthoInter,
+                            );
+                            const distanceBNew = dot(
+                                {
+                                    x: -normalNew.y,
+                                    y: normalNew.x,
+                                },
+                                planesOrthoInter,
+                            );
+                            const negate = distanceANew < 0 ? -1 : 1;
+                            planesOrtho.normal = scale(negate, normalNew);
+                            planesOrtho.distanceA = negate * distanceANew;
+                            planesOrtho.distanceB = negate * distanceBNew;
+                            evt.currentTarget._offset = pos;
+                        }
+                    }}
+                />
+                <text
+                    pointer-events="none"
+                    fill={colors.gauge}
+                    stroke-width="7"
+                    stroke={colors.gauge}
+                >
+                    <textPath
+                        href="#circle-gauge-text-1"
+                        startOffset="75%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text pointer-events="none" fill="white">
+                    <textPath
+                        href="#circle-gauge-text-1"
+                        startOffset="75%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text
+                    pointer-events="none"
+                    fill={colors.gauge}
+                    stroke-width="7"
+                    stroke={colors.gauge}
+                >
+                    <textPath
+                        href="#circle-gauge-text-1"
+                        startOffset="25%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text pointer-events="none" fill="white">
+                    <textPath
+                        href="#circle-gauge-text-1"
+                        startOffset="25%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                {@render ctrlPlanes(
+                    planesOrtho,
+                    [colors.first, colors.second],
+                    [
+                        [1, 0, 0, 1],
+                        [0, -1, 1, 0],
+                    ],
+                )}
+                {@render ctrl(subject, colors.subject)}
+            </g>
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+
+                {@render chiral(
+                    add(
+                        subject,
+                        scale(
+                            -planesParallel.distanceA * 2 +
+                                2 * planesParallel.distanceB,
+                            planesParallel.normal,
+                        ),
+                    ),
+                    colors.rotated,
+                )}
+            {/if}
+
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
+
+            {@render vec(
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceA,
+                    }),
+                    {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceB,
+                    },
+                ),
+                colors.rotated,
+            )}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+
+            {@render label(
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceA,
+                    }),
+                    {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceB,
+                    },
+                ),
+                "Translated (t)",
+                colors.rotated,
+            )}
+            {@render line(
+                subject,
+                planeReflect(
+                    planeReflect(subject, {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceA,
+                    }),
+                    {
+                        normal: planesParallel.normal,
+                        distance: planesParallel.distanceB,
+                    },
+                ),
+                "black",
+                "dotted faded nodir",
+            )}
+
+            <g clip-path="url(#box-clip)">
+                {@render ctrlPlanes(planesParallel, [
+                    colors.first,
+                    colors.second,
+                ])}
+                <line
+                    x1={planesParallel.normal.x *
+                        100 *
+                        planesParallel.distanceA +
+                        planesParallel.normal.y * 100}
+                    y1={-planesParallel.normal.y *
+                        100 *
+                        planesParallel.distanceA +
+                        planesParallel.normal.x * 100}
+                    x2={planesParallel.normal.x *
+                        100 *
+                        planesParallel.distanceB +
+                        planesParallel.normal.y * 100}
+                    y2={-planesParallel.normal.y *
+                        100 *
+                        planesParallel.distanceB +
+                        planesParallel.normal.x * 100}
+                    stroke-width="40"
+                    opacity={0.4}
+                    fill="none"
+                    role="button"
+                    tabindex="-1"
+                    onkeydown={(evt) => {}}
+                    onpointerdown={(evt) => {
+                        if (evt.isPrimary) {
+                            evt.preventDefault();
+                            evt.currentTarget.setPointerCapture(evt.pointerId);
+                            const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                            evt.currentTarget._offset = pos;
+                        }
+                    }}
+                    onpointermove={(evt) => {
+                        if (
+                            evt.currentTarget.hasPointerCapture(evt.pointerId)
+                        ) {
+                            const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                            const delta = dot(
+                                subtract(pos, evt.currentTarget._offset),
+                                planesParallel.normal,
+                            );
+
+                            evt.currentTarget._offset = pos;
+                            planesParallel.distanceA += delta / 100;
+                            planesParallel.distanceB += delta / 100;
+                            const overflow = Math.max(
+                                planesParallel.distanceA - 5,
+                                planesParallel.distanceB - 5,
+                                0,
+                            );
+
+                            planesParallel.distanceA -= overflow;
+                            planesParallel.distanceB -= overflow;
+                            const underflow = Math.min(
+                                5 + planesParallel.distanceA,
+                                5 + planesParallel.distanceB,
+                                0,
+                            );
+
+                            planesParallel.distanceA -= underflow;
+                            planesParallel.distanceB -= underflow;
+                        }
+                    }}
+                    pointer-events="stroke"
+                    cursor="move"
+                    stroke={colors.gauge}
+                />
+                <text
+                    x={(planesParallel.normal.x *
+                        100 *
+                        planesParallel.distanceA +
+                        planesParallel.normal.y * 100 +
+                        planesParallel.normal.x *
+                            100 *
+                            planesParallel.distanceB +
+                        planesParallel.normal.y * 100) /
+                        2}
+                    y={(-planesParallel.normal.y *
+                        100 *
+                        planesParallel.distanceA +
+                        planesParallel.normal.x * 100 -
+                        planesParallel.normal.y *
+                            100 *
+                            planesParallel.distanceB +
+                        planesParallel.normal.x * 100) /
+                        2}
+                    text-anchor="middle"
+                    transform-origin="50% 50%"
+                    style:transform-box="stroke-box"
+                    dominant-baseline="central"
+                    fill={colors.gauge}
+                    stroke-width="7"
+                    stroke={colors.gauge}
+                    pointer-events="none"
+                    transform="rotate({(180 / Math.PI) *
+                        Math.atan2(
+                            -planesParallel.normal.y,
+                            planesParallel.normal.x,
+                        )})"
+                >
+                    Gauge
+                </text>
+                <text
+                    x={(planesParallel.normal.x *
+                        100 *
+                        planesParallel.distanceA +
+                        planesParallel.normal.y * 100 +
+                        planesParallel.normal.x *
+                            100 *
+                            planesParallel.distanceB +
+                        planesParallel.normal.y * 100) /
+                        2}
+                    y={(-planesParallel.normal.y *
+                        100 *
+                        planesParallel.distanceA +
+                        planesParallel.normal.x * 100 -
+                        planesParallel.normal.y *
+                            100 *
+                            planesParallel.distanceB +
+                        planesParallel.normal.x * 100) /
+                        2}
+                    text-anchor="middle"
+                    transform-origin="50% 50%"
+                    style:transform-box="stroke-box"
+                    dominant-baseline="central"
+                    fill={"white"}
+                    pointer-events="none"
+                    transform="rotate({(180 / Math.PI) *
+                        Math.atan2(
+                            -planesParallel.normal.y,
+                            planesParallel.normal.x,
+                        )})"
+                >
+                    Gauge
+                </text>
+            </g>
+
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {#if showChiral}
+                {@render chiral(subject, colors.subject)}
+
+                <g>
+                    {@render chiral(
+                        planeRotated,
+                        colors.rotated,
+                        `${reflectionPlaneMatrix(plane2)} ${reflectionPlaneMatrix(plane)}`,
+                    )}</g
+                >
+            {/if}
+
+            {@render axis()}
+            {@render vec(subject, colors.subject)}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render vec(subject, colors.subject)}
+            <g clip-path="url(#box-clip)">
+                {@render ctrlPlane(plane, colors.first)}
+                {@render ctrlPlane(plane2, colors.second)}
+            </g>
+            {@render vec(planeRotated, colors.rotated)}
+
+            {@render label(subject, "Subject (s)", colors.subject)}
+            {@render label(planeRotated, "Rotated (t)", colors.rotated)}
+
+            {#if planeInter && len(planeInter) <= 6}
+                <circle
+                    cx={planeInter.x * 100}
+                    cy={-planeInter.y * 100}
+                    r="5"
+                    stroke="black"
+                    fill="white"
+                    stroke-width="4"
+                ></circle>
+                <circle
+                    cx={planeInter.x * 100}
+                    cy={-planeInter.y * 100}
+                    r={150}
+                    pointer-events="none"
+                    opacity={0.1}
+                    fill={colors.gauge}
+                />
+                <circle
+                    cx={planeInter.x * 100}
+                    cy={-planeInter.y * 100}
+                    r={160}
+                    stroke-width="40"
+                    opacity={0.4}
+                    fill="none"
+                    pointer-events="stroke"
+                    cursor="move"
+                    stroke={colors.gauge}
+                    onpointerdown={(evt) => {
+                        if (evt.isPrimary) {
+                            evt.preventDefault();
+                            evt.currentTarget.setPointerCapture(evt.pointerId);
+                            const pos = scale(
+                                0.01,
+                                reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                            );
+                            evt.currentTarget._offset = pos;
+                        }
+                    }}
+                    role="button"
+                    tabindex="-1"
+                    onkeydown={(evt) => {}}
+                    onpointermove={(evt) => {
+                        if (
+                            evt.currentTarget.hasPointerCapture(evt.pointerId)
+                        ) {
+                            const pos = scale(
+                                0.01,
+                                reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                            );
+
+                            const inter = planeInter;
+                            const a = subtract(
+                                evt.currentTarget._offset,
+                                inter,
+                            );
+                            const b = subtract(pos, inter);
+                            const damp = Math.min(1, len2(b));
+                            const dampedB = add(
+                                scale(1 - damp, a),
+                                scale(damp, b),
+                            );
+                            const normalNew1 = rotateHalf(
+                                a,
+                                dampedB,
+                                plane.normal,
+                            );
+                            const normalNew2 = rotateHalf(
+                                a,
+                                dampedB,
+                                plane2.normal,
+                            );
+                            const distanceANew = dot(normalNew1, inter);
+                            const distanceBNew = dot(normalNew2, inter);
+                            const negate1 = distanceANew < 0 ? -1 : 1;
+                            const negate2 = distanceBNew < 0 ? -1 : 1;
+
+                            plane.normal = scale(negate1, normalNew1);
+                            plane2.normal = scale(negate2, normalNew2);
+                            plane.distance = negate1 * distanceANew;
+                            plane2.distance = negate2 * distanceBNew;
+
+                            evt.currentTarget._offset = pos;
+                        }
+                    }}
+                    id="circle-gauge-text-2"
+                    transform-origin="{planeInter.x * 100} {-planeInter.y *
+                        100}"
+                    transform="rotate({Math.sign(planesOrtho.distanceA) *
+                        (Math.atan2(-plane.normal.y, plane.normal.x) /
+                            Math.PI) *
+                        180})"
+                />
+                <text
+                    pointer-events="none"
+                    fill={colors.gauge}
+                    stroke-width="7"
+                    stroke={colors.gauge}
+                >
+                    <textPath
+                        href="#circle-gauge-text-2"
+                        startOffset="75%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text pointer-events="none" fill="white">
+                    <textPath
+                        href="#circle-gauge-text-2"
+                        startOffset="75%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text
+                    pointer-events="none"
+                    fill={colors.gauge}
+                    stroke-width="7"
+                    stroke={colors.gauge}
+                >
+                    <textPath
+                        href="#circle-gauge-text-2"
+                        startOffset="25%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text pointer-events="none" fill="white">
+                    <textPath
+                        href="#circle-gauge-text-2"
+                        startOffset="25%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+
+                {@render ctrlPivot(plane, plane2)}
+            {/if}
+
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+</div>
+<section>
     <h2>Vector fields</h2>
     <p>
         Until now we have looked at how a reflection affects a single vector and
@@ -4405,31 +5160,31 @@ function circleReflect(subject, circle) {
         >
             {@render numberline(500, true)}
             <line
-                x1={Math.max(pointPair.b, pointPair.a) * 100}
+                x1={clamp(-5.1, 5.1, Math.max(pointPair.b, pointPair.a)) * 100}
                 x2="510"
                 y1="0"
                 y2="0"
-                stroke={pointPair.a < pointPair.b ? "tomato" : "teal"}
+                stroke={pointPair.a < pointPair.b ? "gold" : colors.first}
                 opacity="0.5"
                 stroke-linecap="round"
                 stroke-width="20"
             ></line>
             <line
-                x1={Math.min(pointPair.b, pointPair.a) * 100}
-                x2={Math.max(pointPair.b, pointPair.a) * 100}
+                x1={clamp(-5.1, 5.1, Math.min(pointPair.b, pointPair.a)) * 100}
+                x2={clamp(-5.1, 5.1, Math.max(pointPair.b, pointPair.a)) * 100}
                 y1="0"
                 y2="0"
-                stroke={pointPair.a < pointPair.b ? "teal" : "tomato"}
+                stroke={pointPair.a < pointPair.b ? colors.first : "gold"}
                 opacity="0.5"
                 stroke-linecap="round"
                 stroke-width="20"
             ></line>
             <line
                 x1="-510"
-                x2={Math.min(pointPair.b, pointPair.a) * 100}
+                x2={clamp(-5.1, 5.1, Math.min(pointPair.b, pointPair.a)) * 100}
                 y1="0"
                 y2="0"
-                stroke={pointPair.a < pointPair.b ? "tomato" : "teal"}
+                stroke={pointPair.a < pointPair.b ? "gold" : colors.first}
                 opacity="0.5"
                 stroke-linecap="round"
                 stroke-width="20"
@@ -4438,6 +5193,7 @@ function circleReflect(subject, circle) {
                 {#if Math.abs(pointPair[k]) < 5}
                     <circle
                         pointer-events="none"
+                        fill={colors.first}
                         cx={pointPair[k] * 100}
                         cy="0"
                         r="10"
@@ -4445,7 +5201,7 @@ function circleReflect(subject, circle) {
                 {:else}
                     <path
                         fill="white"
-                        stroke="black"
+                        stroke={colors.first}
                         stroke-width="2"
                         d="M {Math.sign(pointPair[k]) *
                             510} -10 a 10 10 0 0 {pointPair[k] > 0
@@ -4453,8 +5209,8 @@ function circleReflect(subject, circle) {
                             : 0} 0 20"
                     ></path>
                     <path
-                        fill="black"
-                        stroke="black"
+                        fill={colors.first}
+                        stroke={colors.first}
                         stroke-width="2"
                         d="M {Math.sign(pointPair[k]) *
                             510} -10 a 10 10 0 0 {pointPair[k] > 0
@@ -4472,7 +5228,10 @@ function circleReflect(subject, circle) {
                             const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
                             evt.currentTarget._offset = subtract(
                                 pos,
-                                scale(100, { x: pointPair[k], y: 0 }),
+                                scale(100, {
+                                    x: clamp(-5.1, 5.1, pointPair[k]),
+                                    y: 0,
+                                }),
                             );
                         }
                     }}
@@ -4488,7 +5247,7 @@ function circleReflect(subject, circle) {
 
                             const clamped =
                                 Math.abs(pos.x) > 470
-                                    ? Math.sign(pos.x) * 510
+                                    ? Math.sign(pos.x) * Infinity
                                     : Math.sign(pos.x) *
                                       Math.min(Math.abs(pos.x), 450);
 
@@ -4509,21 +5268,28 @@ function circleReflect(subject, circle) {
                     class={["touch-point"]}
                     cursor="move"
                     opacity="0.3"
-                    cx={pointPair[k] * 100}
+                    cx={clamp(-5.1, 5.1, pointPair[k]) * 100}
                     cy="0"
+                    fill={colors.first}
                     r="20"
                 ></circle>
             {/each}
             {#if Math.abs(pointPair.a) < 5 == Math.abs(pointPair.b) < 5}
                 <circle
                     pointer-events="none"
-                    cx={((pointPair.a + pointPair.b) / 2) * 100}
+                    cx={((clamp(-5.1, 5.1, pointPair.a) +
+                        clamp(-5.1, 5.1, pointPair.b)) /
+                        2) *
+                        100}
                     cy="0"
                     r="4"
                     opacity="0.5"
                 ></circle>
                 <text
-                    x={((pointPair.a + pointPair.b) / 2) * 100}
+                    x={((clamp(-5.1, 5.1, pointPair.a) +
+                        clamp(-5.1, 5.1, pointPair.b)) /
+                        2) *
+                        100}
                     y="-15"
                     font-size="0.6em"
                     opacity="0.5"
@@ -4536,7 +5302,10 @@ function circleReflect(subject, circle) {
                 font-size="smaller"
                 y="-40"
                 text-anchor="middle"
-                x={((pointPair.a + pointPair.b) / 2) * 100}
+                x={((clamp(-5.1, 5.1, pointPair.a) +
+                    clamp(-5.1, 5.1, pointPair.b)) /
+                    2) *
+                    100}
                 >{pointPair.a < pointPair.b ? "Inside" : "Outside"}</text
             >
             {#if Math.abs(pointPair.a) < 5}
@@ -4545,7 +5314,8 @@ function circleReflect(subject, circle) {
                     text-anchor="middle"
                     y="-40"
                     x={((pointPair.a +
-                        Math.sign(pointPair.a - pointPair.b) * 5) /
+                        Math.sign(pointPair.a - clamp(-5.1, 5.1, pointPair.b)) *
+                            5) /
                         2) *
                         100}
                     >{pointPair.a < pointPair.b ? "Outside" : "Inside"}</text
@@ -4557,7 +5327,8 @@ function circleReflect(subject, circle) {
                     text-anchor="middle"
                     y="-40"
                     x={((pointPair.b +
-                        Math.sign(pointPair.b - pointPair.a) * 5) /
+                        Math.sign(pointPair.b - clamp(-5.1, 5.1, pointPair.a)) *
+                            5) /
                         2) *
                         100}
                     >{pointPair.a < pointPair.b ? "Outside" : "Inside"}</text
@@ -4579,37 +5350,37 @@ function circleReflect(subject, circle) {
         >
             {@render numberline(500, true)}
             <line
-                x1={Math.max(pointPair.b, pointPair.a) * 100}
+                x1={clamp(-5.1, 5.1, Math.max(pointPair.b, pointPair.a)) * 100}
                 x2="510"
                 y1="0"
                 y2="0"
-                stroke={pointPair.a < pointPair.b ? "tomato" : "teal"}
+                stroke={pointPair.a < pointPair.b ? "gold" : colors.first}
                 opacity="0.5"
                 stroke-linecap="round"
                 stroke-width="20"
             ></line>
             <line
-                x1={Math.min(pointPair.b, pointPair.a) * 100}
-                x2={Math.max(pointPair.b, pointPair.a) * 100}
+                x1={clamp(-5.1, 5.1, Math.min(pointPair.b, pointPair.a)) * 100}
+                x2={clamp(-5.1, 5.1, Math.max(pointPair.b, pointPair.a)) * 100}
                 y1="0"
                 y2="0"
-                stroke={pointPair.a < pointPair.b ? "teal" : "tomato"}
+                stroke={pointPair.a < pointPair.b ? colors.first : "gold"}
                 opacity="0.5"
                 stroke-linecap="round"
                 stroke-width="20"
             ></line>
             <line
                 x1="-510"
-                x2={Math.min(pointPair.b, pointPair.a) * 100}
+                x2={clamp(-5.1, 5.1, Math.min(pointPair.b, pointPair.a)) * 100}
                 y1="0"
                 y2="0"
-                stroke={pointPair.a < pointPair.b ? "tomato" : "teal"}
+                stroke={pointPair.a < pointPair.b ? "gold" : colors.first}
                 opacity="0.5"
                 stroke-linecap="round"
                 stroke-width="20"
             ></line>
             {#each samples1d as s}
-                {@const i = invert1D(s, pointPair)}
+                {@const i = clamp(-5.1, 5.1, invert1D(s, pointPair))}
                 <circle
                     fill={rainbow1d(s, 5)}
                     pointer-events="none"
@@ -4628,8 +5399,349 @@ function circleReflect(subject, circle) {
                 ></circle>
                 <path
                     fill="none"
-                    d="M {s * 100} 0 A {Math.abs(i - s) * 50} {Math.abs(i - s) *
-                        50} 0 0 {i > s ? 1 : 0} {i * 100} 0"
+                    d="M {s * 100} 0 A {Math.abs(i - s) * 50} {Math.min(
+                        210,
+                        Math.abs(i - s) * 50,
+                    )} 0 0 {i > s ? 1 : 0} {i * 100} 0"
+                    stroke={rainbow1d(s, 5)}
+                    marker-end="url(#vector-head)"
+                />
+            {/each}
+
+            {#each ["a", "b"] as k}
+                {#if Math.abs(pointPair[k]) < 5}
+                    <circle
+                        pointer-events="none"
+                        cx={clamp(-5.1, 5.1, pointPair[k]) * 100}
+                        cy="0"
+                        r="10"
+                        fill={colors.first}
+                    ></circle>
+                {:else}
+                    <path
+                        fill="white"
+                        stroke={colors.first}
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair[k]) *
+                            510} -10 a 10 10 0 0 {pointPair[k] > 0
+                            ? 1
+                            : 0} 0 20"
+                    ></path>
+                    <path
+                        fill={colors.first}
+                        stroke={colors.first}
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair[k]) *
+                            510} -10 a 10 10 0 0 {pointPair[k] > 0
+                            ? 0
+                            : 1} 0 20"
+                    ></path>
+                {/if}
+            {/each}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvasmid: true,
+            }}
+            style:background=""
+            viewBox="-500 -275 1000 300"
+            width="200"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render numberline(500, true)}
+            <line
+                x1={clamp(-5.1, 5.1, Math.max(pointPair2.b, pointPair2.a)) *
+                    100}
+                x2="510"
+                y1="0"
+                y2="0"
+                stroke={pointPair2.a < pointPair2.b ? "gold" : colors.second}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1={clamp(-5.1, 5.1, Math.min(pointPair2.b, pointPair2.a)) *
+                    100}
+                x2={clamp(-5.1, 5.1, Math.max(pointPair2.b, pointPair2.a)) *
+                    100}
+                y1="0"
+                y2="0"
+                stroke={pointPair2.a < pointPair2.b ? colors.second : "gold"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1="-510"
+                x2={clamp(-5.1, 5.1, Math.min(pointPair2.b, pointPair2.a)) *
+                    100}
+                y1="0"
+                y2="0"
+                stroke={pointPair2.a < pointPair2.b ? "gold" : colors.second}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            {#each ["a", "b"] as k}
+                {#if Math.abs(pointPair2[k]) < 5}
+                    <circle
+                        pointer-events="none"
+                        cx={pointPair2[k] * 100}
+                        cy="0"
+                        fill={colors.second}
+                        r="10"
+                    ></circle>
+                {:else}
+                    <path
+                        fill="white"
+                        stroke={colors.second}
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair2[k]) *
+                            510} -10 a 10 10 0 0 {pointPair2[k] > 0
+                            ? 1
+                            : 0} 0 20"
+                    ></path>
+                    <path
+                        fill={colors.second}
+                        stroke={colors.second}
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair2[k]) *
+                            510} -10 a 10 10 0 0 {pointPair2[k] > 0
+                            ? 0
+                            : 1} 0 20"
+                    ></path>
+                {/if}
+
+                <circle
+                    onpointerdown={(evt) => {
+                        if (evt.isPrimary) {
+                            evt.preventDefault();
+                            evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                            const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                            evt.currentTarget._offset = subtract(
+                                pos,
+                                scale(100, {
+                                    x: clamp(-5.1, 5.1, pointPair2[k]),
+                                    y: 0,
+                                }),
+                            );
+                        }
+                    }}
+                    onpointermove={(evt) => {
+                        if (
+                            evt.currentTarget.hasPointerCapture(evt.pointerId)
+                        ) {
+                            evt.preventDefault();
+                            const pos = subtract(
+                                reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                                evt.currentTarget._offset,
+                            );
+
+                            const clamped =
+                                Math.abs(pos.x) > 470
+                                    ? Math.sign(pos.x) * Infinity
+                                    : Math.sign(pos.x) *
+                                      Math.min(Math.abs(pos.x), 450);
+
+                            pointPair2[k] = clamped / 100;
+                        }
+                    }}
+                    ongotpointercapture={(evt) => {
+                        pointPair2.dragging = true;
+                    }}
+                    onlostpointercapture={(evt) => {
+                        pointPair2.dragging = false;
+                    }}
+                    role="button"
+                    tabindex="-1"
+                    onkeypress={(evt) => {
+                        evt.preventDefault();
+                    }}
+                    class={["touch-point"]}
+                    cursor="move"
+                    opacity="0.3"
+                    cx={clamp(-5.1, 5.1, pointPair2[k]) * 100}
+                    cy="0"
+                    r="20"
+                ></circle>
+            {/each}
+            {#if Math.abs(pointPair2.a) < 5 == Math.abs(pointPair2.b) < 5}
+                <circle
+                    pointer-events="none"
+                    cx={((clamp(-5.1, 5.1, pointPair2.a) +
+                        clamp(-5.1, 5.1, pointPair2.b)) /
+                        2) *
+                        100}
+                    cy="0"
+                    r="4"
+                    opacity="0.5"
+                ></circle>
+                <text
+                    x={((clamp(-5.1, 5.1, pointPair2.a) +
+                        clamp(-5.1, 5.1, pointPair2.b)) /
+                        2) *
+                        100}
+                    y="-15"
+                    font-size="0.6em"
+                    opacity="0.5"
+                    text-anchor="middle"
+                >
+                    center
+                </text>
+            {/if}
+            <text
+                font-size="smaller"
+                y="-40"
+                text-anchor="middle"
+                x={((clamp(-5.1, 5.1, pointPair2.a) +
+                    clamp(-5.1, 5.1, pointPair2.b)) /
+                    2) *
+                    100}
+                >{pointPair2.a < pointPair2.b ? "Inside" : "Outside"}</text
+            >
+            {#if Math.abs(pointPair2.a) < 5}
+                <text
+                    font-size="smaller"
+                    text-anchor="middle"
+                    y="-40"
+                    x={((pointPair2.a +
+                        Math.sign(
+                            pointPair2.a - clamp(-5.1, 5.1, pointPair2.b),
+                        ) *
+                            5) /
+                        2) *
+                        100}
+                    >{pointPair2.a < pointPair2.b ? "Outside" : "Inside"}</text
+                >
+            {/if}
+            {#if Math.abs(pointPair2.b) < 5}
+                <text
+                    font-size="smaller"
+                    text-anchor="middle"
+                    y="-40"
+                    x={((pointPair2.b +
+                        Math.sign(
+                            pointPair2.b - clamp(-5.1, 5.1, pointPair2.a),
+                        ) *
+                            5) /
+                        2) *
+                        100}
+                    >{pointPair2.a < pointPair2.b ? "Outside" : "Inside"}</text
+                >
+            {/if}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption></figcaption>
+        <svg
+            class={{
+                canvasmid: true,
+            }}
+            style:background=""
+            viewBox="-500 -275 1000 300"
+            width="200"
+            height="200"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render numberline(500, true)}
+            <line
+                x1={clamp(-5.1, 5.1, Math.max(pointPair.b, pointPair.a)) * 100}
+                x2="510"
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? "gold" : colors.first}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1={clamp(-5.1, 5.1, Math.min(pointPair.b, pointPair.a)) * 100}
+                x2={clamp(-5.1, 5.1, Math.max(pointPair.b, pointPair.a)) * 100}
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? colors.first : "gold"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1="-510"
+                x2={clamp(-5.1, 5.1, Math.min(pointPair.b, pointPair.a)) * 100}
+                y1="0"
+                y2="0"
+                stroke={pointPair.a < pointPair.b ? "gold" : colors.first}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1={clamp(-5.1, 5.1, Math.max(pointPair2.b, pointPair2.a)) *
+                    100}
+                x2="510"
+                y1="0"
+                y2="0"
+                stroke={pointPair2.a < pointPair2.b ? "gold" : colors.second}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1={clamp(-5.1, 5.1, Math.min(pointPair2.b, pointPair2.a)) *
+                    100}
+                x2={clamp(-5.1, 5.1, Math.max(pointPair2.b, pointPair2.a)) *
+                    100}
+                y1="0"
+                y2="0"
+                stroke={pointPair2.a < pointPair2.b ? colors.second : "gold"}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            <line
+                x1="-510"
+                x2={clamp(-5.1, 5.1, Math.min(pointPair2.b, pointPair2.a)) *
+                    100}
+                y1="0"
+                y2="0"
+                stroke={pointPair2.a < pointPair2.b ? "gold" : colors.second}
+                opacity="0.5"
+                stroke-linecap="round"
+                stroke-width="20"
+            ></line>
+            {#each samples1d as s}
+                {@const j = invert1D(s, pointPair)}
+                {@const i = invert1D(j, pointPair2)}
+                <circle
+                    fill={rainbow1d(s, 5)}
+                    pointer-events="none"
+                    cx={clamp(-5.1, 5.1, s) * 100}
+                    stroke="white"
+                    cy="0"
+                    r="5"
+                ></circle>
+                <circle
+                    stroke={rainbow1d(s, 5)}
+                    pointer-events="none"
+                    cx={clamp(-5.1, 5.1, i) * 100}
+                    fill="white"
+                    cy="0"
+                    r="5"
+                ></circle>
+                <path
+                    fill="none"
+                    d="M {s * 100} 0 A {Math.abs(
+                        clamp(-5.1, 5.1, i) - clamp(-5.1, 5.1, s),
+                    ) * 50} {Math.min(
+                        210,
+                        Math.abs(clamp(-5.1, 5.1, i) - clamp(-5.1, 5.1, s)) *
+                            50,
+                    )} 0 0 {i > s ? 1 : 0} {clamp(-5.1, 5.1, i) * 100} 0"
                     stroke={rainbow1d(s, 5)}
                     marker-end="url(#vector-head)"
                 />
@@ -4641,12 +5753,13 @@ function circleReflect(subject, circle) {
                         pointer-events="none"
                         cx={pointPair[k] * 100}
                         cy="0"
+                        fill={colors.first}
                         r="10"
                     ></circle>
                 {:else}
                     <path
                         fill="white"
-                        stroke="black"
+                        stroke={colors.first}
                         stroke-width="2"
                         d="M {Math.sign(pointPair[k]) *
                             510} -10 a 10 10 0 0 {pointPair[k] > 0
@@ -4654,11 +5767,41 @@ function circleReflect(subject, circle) {
                             : 0} 0 20"
                     ></path>
                     <path
-                        fill="black"
-                        stroke="black"
+                        fill={colors.first}
+                        stroke={colors.first}
                         stroke-width="2"
                         d="M {Math.sign(pointPair[k]) *
                             510} -10 a 10 10 0 0 {pointPair[k] > 0
+                            ? 0
+                            : 1} 0 20"
+                    ></path>
+                {/if}
+            {/each}
+            {#each ["a", "b"] as k}
+                {#if Math.abs(pointPair2[k]) < 5}
+                    <circle
+                        pointer-events="none"
+                        cx={pointPair2[k] * 100}
+                        cy="0"
+                        fill={colors.second}
+                        r="10"
+                    ></circle>
+                {:else}
+                    <path
+                        fill="white"
+                        stroke={colors.second}
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair2[k]) *
+                            510} -10 a 10 10 0 0 {pointPair2[k] > 0
+                            ? 1
+                            : 0} 0 20"
+                    ></path>
+                    <path
+                        fill={colors.second}
+                        stroke={colors.second}
+                        stroke-width="2"
+                        d="M {Math.sign(pointPair2[k]) *
+                            510} -10 a 10 10 0 0 {pointPair2[k] > 0
                             ? 0
                             : 1} 0 20"
                     ></path>
@@ -4672,13 +5815,22 @@ function circleReflect(subject, circle) {
 
     <ul>
         <li>
-            <a href="https://www.youtube.com/watch?v=q3as9SGmDdw"
-                >Talk: GAME26 Hamish Todd. Funhouse Mirrors.</a
+            <a
+                href="https://www.youtube.com/watch?v=q3as9SGmDdw"
+                target="_blank">Talk: GAME26 Hamish Todd. Funhouse Mirrors.</a
             >
+        </li>
+        <li>
+            <a
+                href="https://www.youtube.com/watch?v=ichOiuBoBoQ"
+                target="_blank"
+            >
+                Steven De Keninck. Dual Quaternions Demystified
+            </a>
         </li>
 
         <li>
-            <a href="https://bivector.net/">bivector.net</a>
+            <a href="https://bivector.net/" target="_blank">bivector.net</a>
         </li>
     </ul>
 </section>
