@@ -92,11 +92,11 @@
 
     let pointPair = $state({
         a: 1,
-        b: 3,
+        b: 4,
     });
     let pointPair2 = $state({
-        a: 1,
-        b: 3,
+        a: 1.5,
+        b: 3.5,
     });
 
     function transform(v, t) {
@@ -364,6 +364,9 @@
 
         // Both points are infinity: collapse toward ±infinity
         if (aInf && bInf) {
+            if (!isFinite(x)) {
+                return 0;
+            }
             return x < 0 ? -Infinity : Infinity;
         }
 
@@ -445,6 +448,7 @@
         {@const dash = ((l / stripe.length) * 100) / 5}
         <path
             class={[cls, "vector"]}
+            pointer-events="none"
             marker-end="url(#vector-head)"
             vector-effect="non-scaling-stroke"
             d="M 0,0 L {v.x * 100} {v.y * -100}"
@@ -455,6 +459,7 @@
     {:else}
         <path
             class={[cls, "vector"]}
+            pointer-events="none"
             marker-end="url(#vector-head)"
             vector-effect="non-scaling-stroke"
             d="M 0,0 L {v.x * 100} {v.y * -100}"
@@ -969,7 +974,7 @@
                     trans[rad] = Math.min(
                         5,
                         Math.max(
-                            -5,
+                            -4,
                             dot(norm(center), scale(1 / 100, pos)) -
                                 evt.currentTarget._offset,
                         ),
@@ -1002,19 +1007,22 @@
     {@const normal = norm(plane.normal)}
     {@const off = scale(plane.distance, normal)}
     {@const v = add(normal, { x: plane.distance, y: 0 })}
-    <path
-        class={[cls, "touch-point"]}
-        d="M{normal.x * (plane.distance * 100) + normal.y * 500}
-            {normal.y * -(plane.distance * 100) + normal.x * 500}
 
-            {normal.x * (plane.distance * 100) - normal.y * 500}
-            {normal.y * -(plane.distance * 100) - normal.x * 500}"
-        fill="none"
-        stroke={defaultColor ?? "red"}
-        stroke-width="4"
-        stroke-opacity="0.3"
-        pointer-events="none"
-    />
+    <g clip-path="url(#box-clip)">
+        <path
+            class={[cls, "touch-point"]}
+            d="M{normal.x * (plane.distance * 100) + normal.y * 1500}
+            {normal.y * -(plane.distance * 100) + normal.x * 1500}
+
+            {normal.x * (plane.distance * 100) - normal.y * 1500}
+            {normal.y * -(plane.distance * 100) - normal.x * 1500}"
+            fill="none"
+            stroke={defaultColor ?? "red"}
+            stroke-width="4"
+            stroke-opacity="0.3"
+            pointer-events="none"
+        />
+    </g>
     {@render vec(plane.normal, defaultColor)}
     <line
         stroke-linecap="round"
@@ -1027,61 +1035,64 @@
         stroke-dasharray=" 10 10 5 10"
         stroke={defaultColor}
     />
-    <path
-        onpointerdown={(evt) => {
-            if (evt.isPrimary) {
-                evt.preventDefault();
-                evt.currentTarget.setPointerCapture(evt.pointerId);
 
-                const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
-                evt.currentTarget._offset =
-                    dot(scale(1 / 100, pos), norm(normal)) - plane.distance;
-            }
-        }}
-        ongotpointercapture={(evt) => {
-            plane.dragging = true;
-        }}
-        onlostpointercapture={(evt) => {
-            plane.dragging = false;
-        }}
-        onpointermove={(evt) => {
-            if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
-                evt.preventDefault();
-                const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+    <g clip-path="url(#box-clip)">
+        <path
+            onpointerdown={(evt) => {
+                if (evt.isPrimary) {
+                    evt.preventDefault();
+                    evt.currentTarget.setPointerCapture(evt.pointerId);
 
-                plane.distance = Math.min(
-                    4,
-                    Math.max(
-                        -4,
-                        dot(norm(normal), scale(1 / 100, pos)) -
-                            evt.currentTarget._offset,
-                    ),
-                );
-                if (plane.distance < 0) {
-                    plane.distance;
-                    plane.normal = scale(-1, plane.normal);
-                    evt.currentTarget._offset *= -1;
+                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                    evt.currentTarget._offset =
+                        dot(scale(1 / 100, pos), norm(normal)) - plane.distance;
                 }
-            }
-        }}
-        role="button"
-        tabindex="-1"
-        onkeypress={(evt) => {
-            evt.preventDefault();
-        }}
-        class={[cls, "touch-point"]}
-        cursor="move"
-        d="M
-        {normal.x * (plane.distance * 100 + 20) + normal.y * 500}
-        {normal.y * -(plane.distance * 100 + 20) + normal.x * 500}
-        {normal.x * (plane.distance * 100 + 20) - normal.y * 500}
-        {normal.y * -(plane.distance * 100 + 20) - normal.x * 500}"
-        fill="none"
-        stroke={defaultColor ?? "red"}
-        stroke-width="40"
-        stroke-opacity="0.1"
-        pointer-events="stroke"
-    />
+            }}
+            ongotpointercapture={(evt) => {
+                plane.dragging = true;
+            }}
+            onlostpointercapture={(evt) => {
+                plane.dragging = false;
+            }}
+            onpointermove={(evt) => {
+                if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                    evt.preventDefault();
+                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+
+                    plane.distance = Math.min(
+                        4,
+                        Math.max(
+                            -4,
+                            dot(norm(normal), scale(1 / 100, pos)) -
+                                evt.currentTarget._offset,
+                        ),
+                    );
+                    if (plane.distance < 0) {
+                        plane.distance;
+                        plane.normal = scale(-1, plane.normal);
+                        evt.currentTarget._offset *= -1;
+                    }
+                }
+            }}
+            role="button"
+            tabindex="-1"
+            onkeypress={(evt) => {
+                evt.preventDefault();
+            }}
+            class={[cls, "touch-point"]}
+            cursor="move"
+            d="M
+        {normal.x * (plane.distance * 100 + 20) + normal.y * 1500}
+        {normal.y * -(plane.distance * 100 + 20) + normal.x * 1500}
+        {normal.x * (plane.distance * 100 + 20) - normal.y * 1500}
+        {normal.y * -(plane.distance * 100 + 20) - normal.x * 1500}"
+            fill="none"
+            stroke={defaultColor ?? "red"}
+            stroke-width="40"
+            stroke-opacity="0.1"
+            pointer-events="stroke"
+        />
+    </g>
 
     {@render ctrl(plane.normal, defaultColor, "", 1)}
 {/snippet}
@@ -1177,67 +1188,69 @@
             transform(norm(planes.normal), ts[di] ?? [1, 0, 0, 1]),
         )}
 
-        <path
-            class={[cls, "touch-point"]}
-            d="M{normal.x * (planes[d] * 100) + normal.y * 500}
-            {normal.y * -(planes[d] * 100) + normal.x * 500}
+        <g clip-path="url(#box-clip)">
+            <path
+                class={[cls, "touch-point"]}
+                d="M{normal.x * (planes[d] * 100) + normal.y * 1500}
+            {normal.y * -(planes[d] * 100) + normal.x * 1500}
 
-            {normal.x * (planes[d] * 100) - normal.y * 500}
-            {normal.y * -(planes[d] * 100) - normal.x * 500}"
-            fill="none"
-            stroke={defaultColors[di] ?? "red"}
-            stroke-width="4"
-            stroke-opacity="0.3"
-            pointer-events="none"
-        />
-        <path
-            onpointerdown={(evt) => {
-                if (evt.isPrimary) {
+            {normal.x * (planes[d] * 100) - normal.y * 1500}
+            {normal.y * -(planes[d] * 100) - normal.x * 1500}"
+                fill="none"
+                stroke={defaultColors[di] ?? "red"}
+                stroke-width="4"
+                stroke-opacity="0.3"
+                pointer-events="none"
+            />
+            <path
+                onpointerdown={(evt) => {
+                    if (evt.isPrimary) {
+                        evt.preventDefault();
+                        evt.currentTarget.setPointerCapture(evt.pointerId);
+
+                        const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+                        evt.currentTarget._offset =
+                            dot(scale(1 / 100, pos), norm(normal)) - planes[d];
+                    }
+                }}
+                onpointermove={(evt) => {
+                    if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
+                        evt.preventDefault();
+                        const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
+
+                        planes[d] = Math.min(
+                            5,
+                            Math.max(
+                                -5,
+                                dot(norm(normal), scale(1 / 100, pos)) -
+                                    evt.currentTarget._offset,
+                            ),
+                        );
+                    }
+                }}
+                role="button"
+                tabindex="-1"
+                onkeypress={(evt) => {
                     evt.preventDefault();
-                    evt.currentTarget.setPointerCapture(evt.pointerId);
-
-                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
-                    evt.currentTarget._offset =
-                        dot(scale(1 / 100, pos), norm(normal)) - planes[d];
-                }
-            }}
-            onpointermove={(evt) => {
-                if (evt.currentTarget.hasPointerCapture(evt.pointerId)) {
-                    evt.preventDefault();
-                    const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
-
-                    planes[d] = Math.min(
-                        5,
-                        Math.max(
-                            -5,
-                            dot(norm(normal), scale(1 / 100, pos)) -
-                                evt.currentTarget._offset,
-                        ),
-                    );
-                }
-            }}
-            role="button"
-            tabindex="-1"
-            onkeypress={(evt) => {
-                evt.preventDefault();
-            }}
-            class={[cls, "touch-point"]}
-            cursor="move"
-            d="M
+                }}
+                class={[cls, "touch-point"]}
+                cursor="move"
+                d="M
         {normal.x * (planes[d] * 100 + 20 * (Math.sign(planes[d]) || 1)) +
-                normal.y * 500}
+                    normal.y * 1500}
         {normal.y * -(planes[d] * 100 + 20 * (Math.sign(planes[d]) || 1)) +
-                normal.x * 500}
+                    normal.x * 1500}
         {normal.x * (planes[d] * 100 + 20 * (Math.sign(planes[d]) || 1)) -
-                normal.y * 500}
+                    normal.y * 1500}
         {normal.y * -(planes[d] * 100 + 20 * (Math.sign(planes[d]) || 1)) -
-                normal.x * 500}"
-            fill="none"
-            stroke={defaultColors[di] ?? "red"}
-            stroke-width="40"
-            stroke-opacity="0.1"
-            pointer-events="stroke"
-        />
+                    normal.x * 1500}"
+                fill="none"
+                stroke={defaultColors[di] ?? "red"}
+                stroke-width="40"
+                stroke-opacity="0.1"
+                pointer-events="stroke"
+            /></g
+        >
     {/each}
 
     {#if det(normalA, normalB) == 0}
@@ -1311,19 +1324,22 @@
 {/snippet}
 {#snippet pln(plane, defaultColor, cls = null)}
     {@const normal = norm(plane.normal)}
-    <path
-        class={[cls, "touch-point"]}
-        d="M{normal.x * (plane.distance * 100) + normal.y * 500}
-            {normal.y * -(plane.distance * 100) + normal.x * 500}
 
-            {normal.x * (plane.distance * 100) - normal.y * 500}
-            {normal.y * -(plane.distance * 100) - normal.x * 500}"
-        fill="none"
-        stroke={defaultColor ?? "red"}
-        stroke-width="4"
-        stroke-opacity="0.8"
-        pointer-events="none"
-    />
+    <g clip-path="url(#box-clip)">
+        <path
+            class={[cls, "touch-point"]}
+            d="M{normal.x * (plane.distance * 100) + normal.y * 1500}
+            {normal.y * -(plane.distance * 100) + normal.x * 1500}
+
+            {normal.x * (plane.distance * 100) - normal.y * 1500}
+            {normal.y * -(plane.distance * 100) - normal.x * 1500}"
+            fill="none"
+            stroke={defaultColor ?? "red"}
+            stroke-width="4"
+            stroke-opacity="0.8"
+            pointer-events="none"
+        />
+    </g>
 {/snippet}
 
 {#snippet labelPlane(
@@ -4466,7 +4482,7 @@ function circleReflect(subject, circle) {
             {@render axis()}
 
             <g clip-path="url(#box-clip)">
-                {#each adjustedPointSamplesCircle.map( (p) => add(scale(plane.distance, plane.normal), p) ) as { x, y }}
+                {#each adjustedPointSamplesCircle as { x, y }, i (i)}
                     <circle
                         cx={x * 100}
                         cy={-y * 100}
@@ -4613,7 +4629,7 @@ function circleReflect(subject, circle) {
             {@render axis()}
 
             <g clip-path="url(#box-clip)">
-                {#each adjustedPointSamplesCircleScaling.map( (p) => add(scale(plane.distance, plane.normal), p) ) as { x, y }}
+                {#each adjustedPointSamplesCircleScaling as { x, y }}
                     <circle
                         cx={x * 100}
                         cy={-y * 100}
@@ -5400,7 +5416,6 @@ function circleReflect(subject, circle) {
                 <path
                     fill="none"
                     d="M {s * 100} 0 A {Math.abs(i - s) * 50} {Math.min(
-                        210,
                         Math.abs(i - s) * 50,
                     )} 0 0 {i > s ? 1 : 0} {i * 100} 0"
                     stroke={rainbow1d(s, 5)}
@@ -5738,7 +5753,6 @@ function circleReflect(subject, circle) {
                     d="M {s * 100} 0 A {Math.abs(
                         clamp(-5.1, 5.1, i) - clamp(-5.1, 5.1, s),
                     ) * 50} {Math.min(
-                        210,
                         Math.abs(clamp(-5.1, 5.1, i) - clamp(-5.1, 5.1, s)) *
                             50,
                     )} 0 0 {i > s ? 1 : 0} {clamp(-5.1, 5.1, i) * 100} 0"
@@ -5855,7 +5869,7 @@ function circleReflect(subject, circle) {
             <path d="M 10 5 l -10 5 l 3 -5 l -3 -5 z" />
         </marker>
         <clipPath id="box-clip">
-            <rect x="-550" y="-550" width="1100" height="1100"></rect>
+            <rect x="-520" y="-520" width="1040" height="1040"></rect>
         </clipPath>
 
         <clipPath id="circle-clip">
