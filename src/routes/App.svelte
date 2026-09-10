@@ -5395,33 +5395,36 @@ function circleReflect(subject, circle) {
                 stroke-linecap="round"
                 stroke-width="20"
             ></line>
-            {#each samples1d as s}
-                {@const i = clamp(-5.1, 5.1, invert1D(s, pointPair))}
-                <circle
-                    fill={rainbow1d(s, 5)}
-                    pointer-events="none"
-                    cx={s * 100}
-                    stroke="white"
-                    cy="0"
-                    r="5"
-                ></circle>
-                <circle
-                    stroke={rainbow1d(s, 5)}
-                    pointer-events="none"
-                    cx={i * 100}
-                    fill="white"
-                    cy="0"
-                    r="5"
-                ></circle>
-                <path
-                    fill="none"
-                    d="M {s * 100} 0 A {Math.abs(i - s) * 50} {Math.min(
-                        Math.abs(i - s) * 50,
-                    )} 0 0 {i > s ? 1 : 0} {i * 100} 0"
-                    stroke={rainbow1d(s, 5)}
-                    marker-end="url(#vector-head)"
-                />
-            {/each}
+
+            <g clip-path="url(#rect-clip)">
+                {#each samples1d as s}
+                    {@const i = clamp(-5.1, 5.1, invert1D(s, pointPair))}
+                    <circle
+                        fill={rainbow1d(s, 5)}
+                        pointer-events="none"
+                        cx={s * 100}
+                        stroke="white"
+                        cy="0"
+                        r="5"
+                    ></circle>
+                    <circle
+                        stroke={rainbow1d(s, 5)}
+                        pointer-events="none"
+                        cx={i * 100}
+                        fill="white"
+                        cy="0"
+                        r="5"
+                    ></circle>
+                    <path
+                        fill="none"
+                        d="M {s * 100} 0 A {Math.abs(i - s) * 50} {Math.min(
+                            Math.abs(i - s) * 50,
+                        )} 0 0 {i > s ? 1 : 0} {i * 100} 0"
+                        stroke={rainbow1d(s, 5)}
+                        marker-end="url(#vector-head)"
+                    />
+                {/each}
+            </g>
 
             {#each ["a", "b"] as k}
                 {#if Math.abs(pointPair[k]) < 5}
@@ -5729,37 +5732,41 @@ function circleReflect(subject, circle) {
                 stroke-linecap="round"
                 stroke-width="20"
             ></line>
-            {#each samples1d as s}
-                {@const j = invert1D(s, pointPair)}
-                {@const i = invert1D(j, pointPair2)}
-                <circle
-                    fill={rainbow1d(s, 5)}
-                    pointer-events="none"
-                    cx={clamp(-5.1, 5.1, s) * 100}
-                    stroke="white"
-                    cy="0"
-                    r="5"
-                ></circle>
-                <circle
-                    stroke={rainbow1d(s, 5)}
-                    pointer-events="none"
-                    cx={clamp(-5.1, 5.1, i) * 100}
-                    fill="white"
-                    cy="0"
-                    r="5"
-                ></circle>
-                <path
-                    fill="none"
-                    d="M {s * 100} 0 A {Math.abs(
-                        clamp(-5.1, 5.1, i) - clamp(-5.1, 5.1, s),
-                    ) * 50} {Math.min(
-                        Math.abs(clamp(-5.1, 5.1, i) - clamp(-5.1, 5.1, s)) *
-                            50,
-                    )} 0 0 {i > s ? 1 : 0} {clamp(-5.1, 5.1, i) * 100} 0"
-                    stroke={rainbow1d(s, 5)}
-                    marker-end="url(#vector-head)"
-                />
-            {/each}
+
+            <g clip-path="url(#rect-clip)">
+                {#each samples1d as s}
+                    {@const j = invert1D(s, pointPair)}
+                    {@const i = invert1D(j, pointPair2)}
+                    <circle
+                        fill={rainbow1d(s, 5)}
+                        pointer-events="none"
+                        cx={clamp(-5.1, 5.1, s) * 100}
+                        stroke="white"
+                        cy="0"
+                        r="5"
+                    ></circle>
+                    <circle
+                        stroke={rainbow1d(s, 5)}
+                        pointer-events="none"
+                        cx={clamp(-5.1, 5.1, i) * 100}
+                        fill="white"
+                        cy="0"
+                        r="5"
+                    ></circle>
+                    <path
+                        fill="none"
+                        d="M {s * 100} 0 A {Math.abs(
+                            clamp(-5.1, 5.1, i) - clamp(-5.1, 5.1, s),
+                        ) * 50} {Math.min(
+                            Math.abs(
+                                clamp(-5.1, 5.1, i) - clamp(-5.1, 5.1, s),
+                            ) * 50,
+                        )} 0 0 {i > s ? 1 : 0} {clamp(-5.1, 5.1, i) * 100} 0"
+                        stroke={rainbow1d(s, 5)}
+                        marker-end="url(#vector-head)"
+                    />
+                {/each}
+            </g>
 
             {#each ["a", "b"] as k}
                 {#if Math.abs(pointPair[k]) < 5}
@@ -5870,6 +5877,9 @@ function circleReflect(subject, circle) {
         </marker>
         <clipPath id="box-clip">
             <rect x="-520" y="-520" width="1040" height="1040"></rect>
+        </clipPath>
+        <clipPath id="rect-clip">
+            <rect x="-520" y="-275" width="1040" height="550"></rect>
         </clipPath>
 
         <clipPath id="circle-clip">
@@ -5989,7 +5999,7 @@ function circleReflect(subject, circle) {
         aspect-ratio: 3 / 1;
         position: relative;
         user-select: none;
-        overflow: hidden;
+        overflow: visible;
         box-sizing: border-box;
         padding: 1ex;
         width: 100%;
