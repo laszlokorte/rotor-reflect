@@ -41,6 +41,8 @@ affect the rotation result. Try drag the arc segment called
 <code class="name-rotor">rotor</code> below to change the direction of both
 reflectors at once.
 
+![Preview Screenshot](./preview-full.png)
+
 ![Preview Screenshot](./preview.png)
 
 ![Preview Screenshot (3D)](./preview3d.png)
