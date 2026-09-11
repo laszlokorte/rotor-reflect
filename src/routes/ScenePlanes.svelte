@@ -91,11 +91,7 @@
     const circlePoints = Array.from({ length: 5 }, (_, i) => {
         const a = (i / 4 + 1 / 8) * Math.PI * 2;
         return new THREE.Vector3(Math.cos(a), Math.sin(a), 0);
-    });
-
-    const circlePointsGeo = new THREE.BufferGeometry().setFromPoints(
-        circlePoints,
-    );
+    }).flatMap((a) => [a, a]);
 
     const colorFirst = new THREE.Color("black");
     const colorSecond = new THREE.Color("black");
