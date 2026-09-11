@@ -1829,12 +1829,20 @@
 
             {@render vec(subject, colors.subject)}
             {@render vec(reflector, colors.first)}
-            {@render vec(scale(-1, reflector), colors.first, "dashed nodir")}
+            {@render vec(
+                scale(-4, norm(reflector)),
+                colors.first,
+                "dashed nodir",
+            )}
             {@render vec(reflected, colors.reflected)}
 
             {@render vec(rotated, colors.rotated)}
             {@render vec(rotor.to, colors.second)}
-            {@render vec(scale(-1, rotor.to), colors.second, "dashed nodir")}
+            {@render vec(
+                scale(-4, norm(rotor.to)),
+                colors.second,
+                "dashed nodir",
+            )}
 
             {#if arcDirection(subject, reflected, rotated)}
                 {@render arc(subject, reflected, colors.angle_a)}
@@ -3523,6 +3531,13 @@ function circleReflect(subject, circle) {
 </section>
 
 <div class="options">
+    <fieldset>
+        <legend>Options</legend>
+        <label>
+            <input type="checkbox" bind:checked={showChiral} />
+            Show chiral figures
+        </label>
+    </fieldset>
     <fieldset>
         <legend>Customize Colors</legend>
 
@@ -5731,6 +5746,25 @@ function circleReflect(subject, circle) {
                             )} 0 0 {i > s ? 1 : 0} {i * 100} 0"
                             stroke={rainbow1d(s, 5)}
                             marker-end="url(#vector-head)"
+                        />
+                    {:else}
+                        {@const cx = (s + i) / 2}
+                        {@const radX = s - cx}
+                        {@const endX =
+                            cx + radX * Math.cos(Math.PI / 3 / Math.abs(radX))}
+                        {@const endY =
+                            Math.abs(radX) *
+                            -Math.sin(Math.PI / 3 / Math.abs(radX))}
+                        <path
+                            stroke-dasharray="4 5"
+                            fill="none"
+                            stroke-width="3"
+                            d="M {s * 100} 0 A {Math.abs(radX) * 100} {Math.abs(
+                                radX,
+                            ) * 100} 0 0 {i > s ? 1 : 0} {endX * 100} {endY *
+                                100}"
+                            mask="url(#arc-mask)"
+                            stroke={rainbow1d(s, 5)}
                         />
                     {/if}
                 {/each}
