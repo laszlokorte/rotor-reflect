@@ -371,4 +371,6 @@ export default [
     x: 10,
     y: 2,
   },
-];
+].map(({ x, y }) => {
+  return { x: x + 4, y };
+});

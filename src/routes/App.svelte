@@ -384,7 +384,7 @@
     };
     const adjustedPointSamples = $derived(
         plane0.dragging || plane0.normal.dragging
-            ? []
+            ? pointSamples
             : pointSamples.map((p) =>
                   add(
                       scale(plane0.distance, plane0.normal),
@@ -403,14 +403,14 @@
             plane2.dragging ||
             plane.normal.dragging ||
             plane2.normal.dragging
-            ? []
+            ? pointSamples
             : pointSamples.map((p) =>
                   add(len(planeInter) < 10 ? planeInter : { x: 0, y: 0 }, p),
               ),
     );
     const adjustedPointSamplesCircle = $derived(
         circle.dragging || circle.center.dragging
-            ? []
+            ? pointSamples
             : jitteredGrid(10, 0.25).map((p) =>
                   add(circle.center, {
                       x:
@@ -426,7 +426,7 @@
     );
     const adjustedPointSamplesCircleScaling = $derived(
         circle.dragging || circle2.dragging || circle.center.dragging
-            ? []
+            ? pointSamples
             : jitteredGrid(10, 0.25).map((p) =>
                   add(circle.center, {
                       x:
@@ -736,7 +736,10 @@
     <circle
         pointer-events="all"
         onpointerdown={(evt) => {
-            if (evt.isPrimary) {
+            if (
+                evt.isPrimary &&
+                (evt.pointerType !== "mouse" || evt.button == 0)
+            ) {
                 evt.preventDefault();
                 evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -795,7 +798,10 @@
             cy={-int.y * 100}
             pointer-events="all"
             onpointerdown={(evt) => {
-                if (evt.isPrimary) {
+                if (
+                    evt.isPrimary &&
+                    (evt.pointerType !== "mouse" || evt.button == 0)
+                ) {
                     evt.preventDefault();
                     evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -869,7 +875,10 @@
             circle.dragging = false;
         }}
         onpointerdown={(evt) => {
-            if (evt.isPrimary) {
+            if (
+                evt.isPrimary &&
+                (evt.pointerType !== "mouse" || evt.button == 0)
+            ) {
                 evt.preventDefault();
                 evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -957,7 +966,10 @@
                 trans.dragging = false;
             }}
             onpointerdown={(evt) => {
-                if (evt.isPrimary) {
+                if (
+                    evt.isPrimary &&
+                    (evt.pointerType !== "mouse" || evt.button == 0)
+                ) {
                     evt.preventDefault();
                     evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -1039,7 +1051,10 @@
     <g clip-path="url(#box-clip)">
         <path
             onpointerdown={(evt) => {
-                if (evt.isPrimary) {
+                if (
+                    evt.isPrimary &&
+                    (evt.pointerType !== "mouse" || evt.button == 0)
+                ) {
                     evt.preventDefault();
                     evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -1127,39 +1142,39 @@
                 { x: 0, y: 0 },
                 scale(planes.distanceA, planes.normal),
                 defaultColors[0] ?? "black",
-                "dashed faded nodir",
+                "dashdotted faded nodir",
             )}
             {@render line(
                 { x: 0, y: 0 },
                 scale(planes.distanceB, planes.normal),
                 defaultColors[1] ?? "black",
-                "dashed faded nodir",
+                "dashdotted faded nodir",
             )}
         {:else if Math.abs(planes.distanceA) < Math.abs(planes.distanceB)}
             {@render line(
                 { x: 0, y: 0 },
                 scale(planes.distanceA, planes.normal),
                 defaultColors[0] ?? "black",
-                "dashed faded nodir",
+                "dashdotted faded nodir",
             )}
             {@render line(
                 scale(planes.distanceA, planes.normal),
                 scale(planes.distanceB, planes.normal),
                 defaultColors[1] ?? "black",
-                "dashed faded nodir",
+                "dashdotted faded nodir",
             )}
         {:else}
             {@render line(
                 { x: 0, y: 0 },
                 scale(planes.distanceB, planes.normal),
                 defaultColors[1] ?? "black",
-                "dashed faded nodir",
+                "dashdotted faded nodir",
             )}
             {@render line(
                 scale(planes.distanceA, planes.normal),
                 scale(planes.distanceB, planes.normal),
                 defaultColors[0] ?? "black",
-                "dashed faded nodir",
+                "dashdotted faded nodir",
             )}
         {/if}
     {:else}
@@ -1177,7 +1192,7 @@
                 x2={off.x * 100}
                 y2={-off.y * 100}
                 stroke-width="5"
-                stroke-dasharray=" 10 10 5 10"
+                stroke-dasharray="10 10 5 10"
                 stroke={defaultColors[di]}
             />
         {/each}
@@ -1204,7 +1219,10 @@
             />
             <path
                 onpointerdown={(evt) => {
-                    if (evt.isPrimary) {
+                    if (
+                        evt.isPrimary &&
+                        (evt.pointerType !== "mouse" || evt.button == 0)
+                    ) {
                         evt.preventDefault();
                         evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -1277,7 +1295,10 @@
             cy={-int.y * 100}
             pointer-events="all"
             onpointerdown={(evt) => {
-                if (evt.isPrimary) {
+                if (
+                    evt.isPrimary &&
+                    (evt.pointerType !== "mouse" || evt.button == 0)
+                ) {
                     evt.preventDefault();
                     evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -1397,7 +1418,10 @@
         cursor="move"
         fill={defaultColor ?? v.color ?? "red"}
         onpointerdown={(evt) => {
-            if (evt.isPrimary) {
+            if (
+                evt.isPrimary &&
+                (evt.pointerType !== "mouse" || evt.button == 0)
+            ) {
                 evt.preventDefault();
                 evt.stopPropagation();
                 evt.currentTarget.setPointerCapture(evt.pointerId);
@@ -1479,9 +1503,21 @@
         Rotation via Double Reflection
     </h1>
     <p>
-        This is a demonstration how any rotation can be composed of two
+        This page is a demonstration how any rotation can be composed of two
         successive reflections.
     </p>
+    <p>
+        It is inspired by Hamish Todds <a
+            href="https://www.youtube.com/watch?v=q3as9SGmDdw"
+            target="_blank">Funhouse Mirrors</a
+        >
+        talk. The concepts explored below had also already been discussed a by Steven
+        De Keninck in his excellent talk
+        <a href="https://www.youtube.com/watch?v=ichOiuBoBoQ" target="_blank"
+            >Dual Quaternions Demystified</a
+        > a few years ago.
+    </p>
+    <p>This page can be regarded as my personal reintepretation.</p>
     <h2>Reflecting at a vector</h2>
     <p>
         The simplest way of a reflection is reflecting one vector at another
@@ -3485,9 +3521,28 @@ function circleReflect(subject, circle) {
         without modifying their combined result.
     </p>
 </section>
+
+<div class="options">
+    <fieldset>
+        <legend>Customize Colors</legend>
+
+        <div class="picker-row">
+            {@render colorPicker("Subject", "s", "subject")}
+            {@render colorPicker("First Reflector", "u", "first")}
+            {@render colorPicker("Second Reflector", "v", "second")}
+            {@render colorPicker("Double Reflected", "t", "rotated")}
+            {@render colorPicker("Gauge", "g", "gauge")}
+        </div>
+    </fieldset>
+</div>
 <div class="grid">
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            Dragging the <code class="color-label" style:--color={colors.gauge}
+                >Gauge</code
+            > ring rotates both reflectors in sync, keeping the the point reflection
+            caused by the combined plane reflections unchanged.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -3574,7 +3629,12 @@ function circleReflect(subject, circle) {
                     opacity={0.1}
                     fill={colors.gauge}
                 />
-                <circle
+                <path
+                    d={`
+                        M ${planesOrthoInter.x * 100 - 160} ${-planesOrthoInter.y * 100}
+                        a 160 160 0 1 1 320 0
+                        a 160 160 0 1 1 -320 0
+                    `}
                     id="circle-gauge-text-1"
                     transform="rotate({Math.sign(planesOrtho.distanceA) *
                         ((Math.atan2(
@@ -3590,9 +3650,6 @@ function circleReflect(subject, circle) {
                         180})"
                     transform-origin="{planesOrthoInter.x *
                         100} {-planesOrthoInter.y * 100}"
-                    cx={planesOrthoInter.x * 100}
-                    cy={-planesOrthoInter.y * 100}
-                    r={160}
                     stroke-width="40"
                     opacity={0.4}
                     fill="none"
@@ -3603,7 +3660,10 @@ function circleReflect(subject, circle) {
                     tabindex="-1"
                     onkeydown={(evt) => {}}
                     onpointerdown={(evt) => {
-                        if (evt.isPrimary) {
+                        if (
+                            evt.isPrimary &&
+                            (evt.pointerType !== "mouse" || evt.button == 0)
+                        ) {
                             evt.preventDefault();
                             evt.currentTarget.setPointerCapture(evt.pointerId);
                             const pos = scale(
@@ -3715,7 +3775,12 @@ function circleReflect(subject, circle) {
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            Dragging the <code class="color-label" style:--color={colors.gauge}
+                >Gauge</code
+            > block moves both reflectors in sync, keeping the translation caused
+            by the combined reflection unchanged.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -3817,7 +3882,10 @@ function circleReflect(subject, circle) {
                     tabindex="-1"
                     onkeydown={(evt) => {}}
                     onpointerdown={(evt) => {
-                        if (evt.isPrimary) {
+                        if (
+                            evt.isPrimary &&
+                            (evt.pointerType !== "mouse" || evt.button == 0)
+                        ) {
                             evt.preventDefault();
                             evt.currentTarget.setPointerCapture(evt.pointerId);
                             const pos = reflect({ x: 1, y: 0 }, evtToSvg(evt));
@@ -3933,7 +4001,12 @@ function circleReflect(subject, circle) {
         </svg>
     </figure>
     <figure class="grid-item">
-        <figcaption></figcaption>
+        <figcaption>
+            Dragging the <code class="color-label" style:--color={colors.gauge}
+                >Gauge</code
+            > ring rotates both reflectors in sync, keeping the rotation caused by
+            the combined reflection unchanged.
+        </figcaption>
         <svg
             class="canvas"
             viewBox="-500 -500 1000 1000"
@@ -3984,10 +4057,12 @@ function circleReflect(subject, circle) {
                     opacity={0.1}
                     fill={colors.gauge}
                 />
-                <circle
-                    cx={planeInter.x * 100}
-                    cy={-planeInter.y * 100}
-                    r={160}
+                <path
+                    d={`
+                        M ${planeInter.x * 100 - 160} ${-planeInter.y * 100}
+                        a 160 160 0 1 1 320 0
+                        a 160 160 0 1 1 -320 0
+                    `}
                     stroke-width="40"
                     opacity={0.4}
                     fill="none"
@@ -3995,7 +4070,10 @@ function circleReflect(subject, circle) {
                     cursor="move"
                     stroke={colors.gauge}
                     onpointerdown={(evt) => {
-                        if (evt.isPrimary) {
+                        if (
+                            evt.isPrimary &&
+                            (evt.pointerType !== "mouse" || evt.button == 0)
+                        ) {
                             evt.preventDefault();
                             evt.currentTarget.setPointerCapture(evt.pointerId);
                             const pos = scale(
@@ -4112,6 +4190,231 @@ function circleReflect(subject, circle) {
 
                 {@render ctrlPivot(plane, plane2)}
             {/if}
+
+            {@render ctrl(subject, colors.subject)}
+        </svg>
+    </figure>
+    <figure class="grid-item">
+        <figcaption>
+            Dragging the <code class="color-label" style:--color={colors.gauge}
+                >Gauge</code
+            > ring scales both reflector circles in sync, keeping the scaling caused
+            by their composition unchanged.
+        </figcaption>
+        <svg
+            class="canvas"
+            viewBox="-500 -500 1000 1000"
+            width="100"
+            height="100"
+            preserveAspectRatio="xMidYMid meet"
+        >
+            {@render axis()}
+            {#if showChiral}
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        <circle
+                            text-anchor="middle"
+                            cx={dot.x * 100}
+                            cy={-dot.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill={colors.subject}
+                        />
+                        >
+                    {/each}
+                </g>
+                <g pointer-events="none" opacity="0.4">
+                    {#each fGrid as { x, y }}
+                        {@const dot = {
+                            x: subject.x + (x - gridSize) / 4,
+                            y: subject.y - (y - gridSize) / 4,
+                        }}
+                        {@const dotCircledReflected = circleReflect(
+                            circle,
+                            dot,
+                        )}
+                        {@const dotCircledReflectedTwice = circleReflect(
+                            circle3,
+                            dotCircledReflected,
+                        )}
+                        <circle
+                            text-anchor="middle"
+                            cx={dotCircledReflectedTwice.x * 100}
+                            cy={-dotCircledReflectedTwice.y * 100}
+                            r="4"
+                            font-size={300}
+                            stroke={"none"}
+                            stroke-opacity="0.7"
+                            stroke-width="20"
+                            fill={colors.rotated}
+                        />
+                        >
+                    {/each}
+                </g>
+            {/if}
+            <g clip-path="url(#box-clip)">
+                <circle
+                    cx={circle.center.x * 100}
+                    cy={-circle.center.y * 100}
+                    fill="none"
+                    fill-opacity="0.1"
+                    stroke={colors.first}
+                    r={circle.radius * 100}
+                ></circle>
+                <circle
+                    cx={circle3.center.x * 100}
+                    cy={-circle3.center.y * 100}
+                    fill="none"
+                    fill-opacity="0.1"
+                    stroke={colors.second}
+                    r={circle3.radius * 100}
+                ></circle>
+                <circle
+                    cx={circle.center.x * 100}
+                    cy={-circle.center.y * 100}
+                    r={(Math.min(circle.radius, circle2.radius) * 110) / 2}
+                    pointer-events="none"
+                    opacity={0.1}
+                    fill={colors.gauge}
+                />
+            </g>
+
+            {@render vec(subject, colors.subject)}
+            {@render vec(circleScaled, colors.rotated)}
+
+            <g clip-path="url(#box-clip)">
+                {@render ctrlRad(circle, colors.first)}
+                {@render ctrlRad(circle2, colors.second, null, circle.center)}
+            </g>
+
+            {@render ctrl(circle.center, colors.first, [], false, [
+                colors.first,
+                colors.second,
+            ])}
+            <g clip-path="url(#box-clip)">
+                <path
+                    d={`
+                        M ${circle.center.x * 100 - ((Math.min(circle.radius, circle2.radius) * 110) / 2 + 5)}
+                          ${-circle.center.y * 100}
+                        a ${(Math.min(circle.radius, circle2.radius) * 110) / 2 + 5}
+                          ${(Math.min(circle.radius, circle2.radius) * 110) / 2 + 5}
+                          0 1 1 ${Math.min(circle.radius, circle2.radius) * 110 + 10} 0
+                        a ${(Math.min(circle.radius, circle2.radius) * 110) / 2 + 5}
+                          ${(Math.min(circle.radius, circle2.radius) * 110) / 2 + 5}
+                          0 1 1 -${Math.min(circle.radius, circle2.radius) * 110 + 10} 0
+                    `}
+                    id="circle-gauge-text-3"
+                    stroke-width="40"
+                    opacity={0.4}
+                    fill="none"
+                    pointer-events="stroke"
+                    cursor="move"
+                    stroke={colors.gauge}
+                    onpointerdown={(evt) => {
+                        if (
+                            evt.isPrimary &&
+                            (evt.pointerType !== "mouse" || evt.button == 0)
+                        ) {
+                            evt.preventDefault();
+                            evt.currentTarget.setPointerCapture(evt.pointerId);
+                            const pos = scale(
+                                0.01,
+                                reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                            );
+                            evt.currentTarget._offset = pos;
+                        }
+                    }}
+                    role="button"
+                    tabindex="-1"
+                    onkeydown={(evt) => {}}
+                    onpointermove={(evt) => {
+                        if (
+                            evt.currentTarget.hasPointerCapture(evt.pointerId)
+                        ) {
+                            const pos = scale(
+                                0.01,
+                                reflect({ x: 1, y: 0 }, evtToSvg(evt)),
+                            );
+
+                            const a = subtract(
+                                evt.currentTarget._offset,
+                                circle.center,
+                            );
+                            const b = subtract(pos, circle.center);
+                            const factor = len(b) / len(a);
+                            circle.radius *= factor;
+                            circle2.radius *= factor;
+
+                            const limit = Math.min(
+                                1,
+                                5 / Math.max(5, circle.radius, circle2.radius),
+                            );
+
+                            circle.radius *= limit;
+                            circle2.radius *= limit;
+
+                            evt.currentTarget._offset = pos;
+                        }
+                    }}
+                />
+                <text
+                    pointer-events="none"
+                    fill={colors.gauge}
+                    stroke-width="7"
+                    stroke={colors.gauge}
+                >
+                    <textPath
+                        href="#circle-gauge-text-3"
+                        startOffset="75%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text pointer-events="none" fill="white">
+                    <textPath
+                        href="#circle-gauge-text-3"
+                        startOffset="75%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text
+                    pointer-events="none"
+                    fill={colors.gauge}
+                    stroke-width="7"
+                    stroke={colors.gauge}
+                >
+                    <textPath
+                        href="#circle-gauge-text-3"
+                        startOffset="25%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+                <text pointer-events="none" fill="white">
+                    <textPath
+                        href="#circle-gauge-text-3"
+                        startOffset="25%"
+                        text-anchor="middle"
+                        dominant-baseline="central"
+                    >
+                        Gauge
+                    </textPath>
+                </text>
+            </g>
 
             {@render ctrl(subject, colors.subject)}
         </svg>
@@ -5237,7 +5540,10 @@ function circleReflect(subject, circle) {
 
                 <circle
                     onpointerdown={(evt) => {
-                        if (evt.isPrimary) {
+                        if (
+                            evt.isPrimary &&
+                            (evt.pointerType !== "mouse" || evt.button == 0)
+                        ) {
                             evt.preventDefault();
                             evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -5537,7 +5843,10 @@ function circleReflect(subject, circle) {
 
                 <circle
                     onpointerdown={(evt) => {
-                        if (evt.isPrimary) {
+                        if (
+                            evt.isPrimary &&
+                            (evt.pointerType !== "mouse" || evt.button == 0)
+                        ) {
                             evt.preventDefault();
                             evt.currentTarget.setPointerCapture(evt.pointerId);
 
@@ -6022,6 +6331,9 @@ function circleReflect(subject, circle) {
         stroke-dasharray: 1 5;
         stroke-width: 2;
     }
+    .dashdotted {
+        stroke-dasharray: 10 5 10;
+    }
     .thick {
         stroke-width: 5;
         opacity: 0.8;
@@ -6099,6 +6411,13 @@ function circleReflect(subject, circle) {
 
     text {
         pointer-events: none;
+    }
+    input[type="color" i]::-webkit-color-swatch-wrapper {
+        padding: 0;
+        border: none;
+    }
+    input[type="color" i]::-webkit-color-swatch {
+        border: none;
     }
 
     @media (pointer: coarse) {
