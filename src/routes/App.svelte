@@ -6297,7 +6297,7 @@ function circleReflect(subject, circle) {
         );
     }
     .dragging .slow {
-        opacity: 0.1;
+        opacity: 0;
         transition: none;
     }
     .slow {
