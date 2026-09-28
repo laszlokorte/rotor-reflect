@@ -27,6 +27,7 @@
     "@threlte/extras": "^9.21.0",
     "@types/three": "^0.185.1",
     "highlight.js": "^11.12.0",
+    "regl": "^2.1.1",
     "three": "^0.185.1"
   }
 }

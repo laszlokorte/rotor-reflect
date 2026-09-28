@@ -4,6 +4,7 @@
     import fGrid from "./f_grid";
     import Highlight from "./Highlight.svelte";
     import { jitteredGrid, uniform1d } from "./sampling";
+    import Rainbow from "./Rainbow.svelte";
 
     const favicon = "favicon.svg";
 
@@ -384,7 +385,7 @@
     };
     const adjustedPointSamples = $derived(
         plane0.dragging || plane0.normal.dragging
-            ? pointSamples
+            ? []
             : pointSamples.map((p) =>
                   add(
                       scale(plane0.distance, plane0.normal),
@@ -403,14 +404,14 @@
             plane2.dragging ||
             plane.normal.dragging ||
             plane2.normal.dragging
-            ? pointSamples
+            ? []
             : pointSamples.map((p) =>
                   add(len(planeInter) < 10 ? planeInter : { x: 0, y: 0 }, p),
               ),
     );
     const adjustedPointSamplesCircle = $derived(
         circle.dragging || circle.center.dragging
-            ? pointSamples
+            ? []
             : jitteredGrid(10, 0.25).map((p) =>
                   add(circle.center, {
                       x:
@@ -426,7 +427,7 @@
     );
     const adjustedPointSamplesCircleScaling = $derived(
         circle.dragging || circle2.dragging || circle.center.dragging
-            ? pointSamples
+            ? []
             : jitteredGrid(10, 0.25).map((p) =>
                   add(circle.center, {
                       x:
@@ -896,7 +897,7 @@
                 circle.radius = Math.min(
                     5,
                     Math.max(
-                        0,
+                        0.001,
                         Math.hypot(
                             Math.abs(pos.x / 100 - center.x),
                             Math.abs(pos.y / 100 - center.y),
@@ -4840,6 +4841,13 @@ function circleReflect(subject, circle) {
             inside end outside of the circle is swapped. Some arrows point
             outward, some arrows point inward to the circles center.
         </figcaption>
+        <!--<Rainbow
+            uniforms={{
+                center: [circle.center.x / 10, circle.center.y / 10],
+                radius: circle.radius / 10,
+            }}
+        ></Rainbow>
+        -->
         <svg
             class={{
                 canvas: true,
@@ -6289,11 +6297,14 @@ function circleReflect(subject, circle) {
         );
     }
     .dragging .slow {
-        opacity: 0;
+        opacity: 0.1;
         transition: none;
     }
     .slow {
-        transition: opacity linear 0.5s;
+        @starting-style {
+            opacity: 0;
+        }
+        transition: opacity linear 0.5s 0s;
     }
 
     @keyframes wiremove {
@@ -6454,8 +6465,18 @@ function circleReflect(subject, circle) {
     }
 
     figure {
-        display: flex;
+        display: grid;
+        grid-auto-rows: auto;
+        grid-template-rows: max-content;
+        align-content: start;
         flex-direction: column;
+    }
+    figure > svg,
+    figure > :global(canvas) {
+        grid-row: 1 / span 1;
+        grid-column: 1 / -1;
+        width: 100%;
+        height: 100%;
     }
 
     figcaption {
@@ -6553,5 +6574,9 @@ function circleReflect(subject, circle) {
     }
     p {
         line-height: 1.6;
+    }
+    .noiteract {
+        pointer-events: none;
+        z-index: 100;
     }
 </style>
